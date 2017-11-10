@@ -1,7 +1,7 @@
 <?php
 /*
 Plugin Name: Shifter – Artifact Helper
-Plugin URI: https://github.com/getshifter/shifter-dashboard-timer
+Plugin URI: https://github.com/getshifter/shifter-artifact-helper
 Description: Helper tool for building Shifter Artifacts
 Version: 0.7.0
 Author: Shifter Team
