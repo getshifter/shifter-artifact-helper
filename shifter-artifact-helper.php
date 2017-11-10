@@ -1,11 +1,11 @@
 <?php
 /*
-Plugin Name: Get ALL Links.
-Plugin URI:
-Description:
-Version: 0.6.0
-Author: DigitalCube
-Author URI:
+Plugin Name: Shifter – Artifact Helper
+Plugin URI: https://github.com/getshifter/shifter-dashboard-timer
+Description: Helper tool for building Shifter Artifacts
+Version: 0.7.0
+Author: Shifter Team
+Author URI: https://getshifter.io
 License: GPLv2 or later
 */
 
