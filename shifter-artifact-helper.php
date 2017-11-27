@@ -40,7 +40,7 @@ add_action( 'template_redirect', function() {
         return;
       }
       $num_of_pages = ceil(intval($total_posts) / $pages_per_page);
-      $pagenate_links = paginate_links(array('base'=>"{$base_url}%_%", 'format'=>'page/%#%/', 'total'=> $num_of_pages));
+      $pagenate_links = paginate_links(array('base'=>"{$base_url}%_%", 'format'=>'page/%#%/', 'total'=> $num_of_pages, 'show_all' => true));
       if ( preg_match_all('/class=["\']page-numbers["\'][\s]+href=["\']([^"\']*)["\']/', $pagenate_links, $pg_matches, PREG_SET_ORDER) ) {
           foreach ( $pg_matches as $pg_match ) {
               $paginate_link = remove_query_arg(array('urls','max'), str_replace('&#038;', '&', $pg_match[1]));
@@ -225,7 +225,7 @@ add_action( 'template_redirect', function() {
         $category_list = get_categories();
         foreach ($category_list as $cat) {
           $term_link = get_term_link($cat);
-          $get_paginates($termlink, $cat->count);
+          $get_paginates($term_link, $cat->count);
         }
 
         // paginated tag
