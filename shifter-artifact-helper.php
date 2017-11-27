@@ -34,6 +34,25 @@ add_action( 'template_redirect', function() {
 
     header('Content-Type: application/json');
 
+    $get_paginates = function ($base_url, $total_posts) use(&$urls, &$url_count, $start_position, $end_position) {
+      $pages_per_page = intval(get_option('posts_per_page'));
+      if ($pages_per_page === 0) {
+        return;
+      }
+      $num_of_pages = ceil(intval($total_posts) / $pages_per_page);
+      $pagenate_links = paginate_links(array('base'=>"{$base_url}%_%", 'format'=>'page/%#%/', 'total'=> $num_of_pages, 'show_all' => true));
+      if ( preg_match_all('/class=["\']page-numbers["\'][\s]+href=["\']([^"\']*)["\']/', $pagenate_links, $pg_matches, PREG_SET_ORDER) ) {
+          foreach ( $pg_matches as $pg_match ) {
+              $paginate_link = remove_query_arg(array('urls','max'), str_replace('&#038;', '&', $pg_match[1]));
+              if ( $url_count >= $start_position && $url_count < $end_position ) {
+                  $urls['items'][] = array('link_type' => 'paginate_link', 'post_type' => '', 'link' => $paginate_link);
+                  $url_count++;
+              }
+          }
+      }
+      unset($pg_matches);
+    };
+
     if ( is_front_page() ) {
         // top page link
         $home_url = home_url( '/' );
@@ -141,8 +160,8 @@ add_action( 'template_redirect', function() {
         if ($url_count < $end_position) {
             foreach ( array('yearly','monthly','daily') as $archive_type ) {
                 if (get_option('shifter_skip_'.$archive_type) !== 'yes') {
-                    $archives_list = wp_get_archives(array('type'=>$archive_type,'format'=>'none','echo'=>0));
-                    if ( preg_match_all('/href=["\']([^"\']*)["\']/', $archives_list, $matches, PREG_SET_ORDER) ) {
+                    $archives_list = wp_get_archives(array('type'=>$archive_type,'format'=>'none','echo'=>0, 'show_post_count'=>true));
+                    if ( preg_match_all('/href=["\']([^"\']*)["\'].+\((\d+)\)/', $archives_list, $matches, PREG_SET_ORDER) ) {
                         foreach ( $matches as $match ) {
                             $archive_link = remove_query_arg(array('urls','max'), str_replace('&#038;', '&', $match[1]));
                             if ( trailingslashit($archive_link) === trailingslashit($home_url))
@@ -151,6 +170,7 @@ add_action( 'template_redirect', function() {
                                 continue;
                             if ($url_count >= $start_position && $url_count < $end_position)
                                 $urls['items'][] = array('link_type' => 'archive_link', 'post_type' => $archive_type, 'link' => $archive_link);
+                                $get_paginates($archive_link, intval($match[2]));
                             if ($url_count >= $end_position)
                                 break;
                             $url_count++;
@@ -199,6 +219,20 @@ add_action( 'template_redirect', function() {
                 }
             }
             unset($matches);
+        }
+
+        // paginated category
+        $category_list = get_categories();
+        foreach ($category_list as $cat) {
+          $term_link = get_term_link($cat);
+          $get_paginates($term_link, $cat->count);
+        }
+
+        // paginated tag
+        $tag_list = get_tags();
+        foreach ($tag_list as $tag) {
+          $term_link = get_term_link($tag);
+          $get_paginates($term_link, $tag->count);
         }
 
     } else if ( !is_single() ) {
