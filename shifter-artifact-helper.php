@@ -170,10 +170,10 @@ add_action( 'template_redirect', function() {
                                 continue;
                             if ($url_count >= $start_position && $url_count < $end_position)
                                 $urls['items'][] = array('link_type' => 'archive_link', 'post_type' => $archive_type, 'link' => $archive_link);
+                                $url_count++;
                                 $get_paginates($archive_link, intval($match[2]));
                             if ($url_count >= $end_position)
                                 break;
-                            $url_count++;
                         }
                     }
                     unset($matches);
