@@ -44,7 +44,7 @@ add_action( 'template_redirect', function() {
       if ( preg_match_all('/class=["\']page-numbers["\'][\s]+href=["\']([^"\']*)["\']/', $pagenate_links, $pg_matches, PREG_SET_ORDER) ) {
           foreach ( $pg_matches as $pg_match ) {
               $paginate_link = remove_query_arg(array('urls','max'), str_replace('&#038;', '&', $pg_match[1]));
-              if ( $url_count < $end_position ) {
+              if ( $url_count >= $start_position && $url_count < $end_position ) {
                   $urls['items'][] = array('link_type' => 'paginate_link', 'post_type' => '', 'link' => $paginate_link);
                   $url_count++;
               }
