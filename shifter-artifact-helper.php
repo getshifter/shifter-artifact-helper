@@ -46,9 +46,9 @@ add_action( 'template_redirect', function() {
               $paginate_link = remove_query_arg(array('urls','max'), str_replace('&#038;', '&', $pg_match[1]));
               if ( $url_count >= $start_position && $url_count < $end_position ) {
                   $urls['items'][] = array('link_type' => 'paginate_link', 'post_type' => '', 'link' => $paginate_link);
-                  $url_count++;
               }
-          }
+              $url_count++;
+            }
       }
       unset($pg_matches);
     };
