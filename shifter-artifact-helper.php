@@ -3,7 +3,7 @@
 Plugin Name: Shifter – Artifact Helper
 Plugin URI: https://github.com/getshifter/shifter-artifact-helper
 Description: Helper tool for building Shifter Artifacts
-Version: 0.8.4
+Version: 0.8.5.dev
 Author: Shifter Team
 Author URI: https://getshifter.io
 License: GPLv2 or later
@@ -127,7 +127,7 @@ add_action( 'template_redirect', function() {
                     if ($url_count >= $end_position)
                         break;
 
-                    $posts_by_type = get_posts( array('post_type' => $post_type, 'post_status' => 'publish', 'numberposts' => -1) );
+                    $posts_by_type = get_posts( array('post_type' => $post_type, 'post_status' => 'publish', 'posts_per_page' => -1) );
                     $get_paginates($post_type_archive_link, count($posts_by_type) );
                     $url_count++;
                 }
