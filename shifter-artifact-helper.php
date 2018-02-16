@@ -113,7 +113,12 @@ add_action( 'template_redirect', function() {
 
                                 // Automattic AMP
                                 if ( defined('AMP__DIR__') ) {
-                                    $amp_supported = AMP_Options_Manager::get_option('supported_post_types');
+                                    // supported_post_types is empty until first saved the setting.
+                                    if (AMP_Options_Manager::get_option('supported_post_types')) {
+                                        $amp_supported = AMP_Options_Manager::get_option('supported_post_types');
+                                    } else {
+                                        $amp_supported = array("post");
+                                    }
                                     // Force ignnore page.
                                     if ($post_type !== 'page') {
                                         if (in_array($post_type, (array)$amp_supported)) {
