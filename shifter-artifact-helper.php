@@ -113,14 +113,15 @@ add_action( 'template_redirect', function() {
 
                                 // Automattic AMP
                                 if ( defined('AMP__DIR__') ) {
-                                    require_once AMP__DIR__ . '/includes/amp-helper-functions.php';
+                                    $amp_supported = AMP_Options_Manager::get_option('supported_post_types');
+                                    // Force ignnore page.
                                     if ($post_type !== 'page') {
-                                        echo var_dump($post);
-                                        echo "\n";
-                                        echo post_supports_amp($post);
-                                        echo "\n";
+                                        if (in_array($post_type, $amp_supported)) {
+                                            $amp_permalink =amp_get_permalink($post->ID);
+                                            $urls['items'][] = array('link_type' => 'amphtml', 'post_type' => $post_type, 'link' => $amp_permalink);
+                                        }
+                                        $url_count++;
                                     }
-                                    $url_count++;
                                 };
                                 if ($url_count >= $end_position)
                                     break;
