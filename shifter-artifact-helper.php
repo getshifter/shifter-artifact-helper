@@ -111,8 +111,8 @@ add_action( 'template_redirect', function() {
                                     break;
                                 $url_count++;
 
-                                // Automattic AMP
-                                if ( defined('AMP__DIR__') ) {
+                                // Detect Automattic AMP
+                                if ( function_exists( 'amp_get_permalink' ) ) {
                                     // supported_post_types is empty until first saved the setting.
                                     if (AMP_Options_Manager::get_option('supported_post_types')) {
                                         $amp_supported = AMP_Options_Manager::get_option('supported_post_types');
