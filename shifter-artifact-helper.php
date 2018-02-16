@@ -107,9 +107,24 @@ add_action( 'template_redirect', function() {
                             } else {
                                 if ($url_count >= $start_position && $url_count < $end_position)
                                     $urls['items'][] = array('link_type' => 'permalink', 'post_type' => $post_type, 'link' => $permalink);
+                                    $url_count++;
                                 if ($url_count >= $end_position)
                                     break;
-                                $url_count++;
+
+                                // Automattic AMP
+                                if ( defined('AMP__DIR__') ) {
+                                    require_once AMP__DIR__ . '/includes/amp-helper-functions.php';
+                                    if ($post_type !== 'page') {
+                                        echo var_dump($post);
+                                        echo "\n";
+                                        echo post_supports_amp($post);
+                                        echo "\n";
+                                    }
+                                    $url_count++;
+                                };
+                                if ($url_count >= $end_position)
+                                    break;
+
                             }
                         }
                     }
