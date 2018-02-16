@@ -116,16 +116,18 @@ add_action( 'template_redirect', function() {
                                     $amp_supported = AMP_Options_Manager::get_option('supported_post_types');
                                     // Force ignnore page.
                                     if ($post_type !== 'page') {
-                                        if (in_array($post_type, $amp_supported)) {
-                                            $amp_permalink =amp_get_permalink($post->ID);
-                                            if ($url_count >= $start_position && $url_count < $end_position)
-                                                $urls['items'][] = array('link_type' => 'amphtml', 'post_type' => $post_type, 'link' => $amp_permalink);
-                                            if ($url_count >= $end_position)
-                                                break;
-                                            $url_count++;
+                                        if (in_array($post_type, (array)$amp_supported)) {
+                                            if (post_supports_amp($post)) {
+                                                $amp_permalink =amp_get_permalink($post->ID);
+                                                if ($url_count >= $start_position && $url_count < $end_position)
+                                                    $urls['items'][] = array('link_type' => 'amphtml', 'post_type' => $post_type, 'link' => $amp_permalink);
+                                                if ($url_count >= $end_position)
+                                                    break;
+                                                $url_count++;
+                                            }
                                         }
                                     }
-                                };
+                                }
                             }
                         }
                     }
