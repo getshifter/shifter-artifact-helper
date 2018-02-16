@@ -119,8 +119,8 @@ add_action( 'template_redirect', function() {
                                         if (in_array($post_type, $amp_supported)) {
                                             $amp_permalink =amp_get_permalink($post->ID);
                                             $urls['items'][] = array('link_type' => 'amphtml', 'post_type' => $post_type, 'link' => $amp_permalink);
+                                            $url_count++;
                                         }
-                                        $url_count++;
                                     }
                                 };
                                 if ($url_count >= $end_position)
