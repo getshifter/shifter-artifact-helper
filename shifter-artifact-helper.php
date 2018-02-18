@@ -110,6 +110,29 @@ add_action( 'template_redirect', function() {
                                 if ($url_count >= $end_position)
                                     break;
                                 $url_count++;
+
+                                // Detect Automattic AMP
+                                if ( function_exists( 'amp_get_permalink' ) ) {
+                                    // supported_post_types is empty until first saved the setting.
+                                    if (AMP_Options_Manager::get_option('supported_post_types')) {
+                                        $amp_supported = AMP_Options_Manager::get_option('supported_post_types');
+                                    } else {
+                                        $amp_supported = array("post");
+                                    }
+                                    // Force ignnore page.
+                                    if ($post_type !== 'page') {
+                                        if (in_array($post_type, (array)$amp_supported)) {
+                                            if (post_supports_amp($post)) {
+                                                $amp_permalink =amp_get_permalink($post->ID);
+                                                if ($url_count >= $start_position && $url_count < $end_position)
+                                                    $urls['items'][] = array('link_type' => 'amphtml', 'post_type' => $post_type, 'link' => $amp_permalink);
+                                                if ($url_count >= $end_position)
+                                                    break;
+                                                $url_count++;
+                                            }
+                                        }
+                                    }
+                                }
                             }
                         }
                     }
