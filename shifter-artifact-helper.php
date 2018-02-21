@@ -121,14 +121,17 @@ add_action( 'template_redirect', function() {
                                     }
                                     // Force ignnore page.
                                     if ($post_type !== 'page') {
-                                        if (in_array($post_type, (array)$amp_supported)) {
-                                            if (post_supports_amp($post)) {
-                                                $amp_permalink =amp_get_permalink($post->ID);
-                                                if ($url_count >= $start_position && $url_count < $end_position)
-                                                    $urls['items'][] = array('link_type' => 'amphtml', 'post_type' => $post_type, 'link' => $amp_permalink);
-                                                if ($url_count >= $end_position)
-                                                    break;
-                                                $url_count++;
+                                        // Skip password_protected.
+                                        if (!strlen(get_post_field('post_password', $post->ID)) > 0) {
+                                            if (in_array($post_type, (array)$amp_supported)) {
+                                                if (post_supports_amp($post)) {
+                                                    $amp_permalink =amp_get_permalink($post->ID);
+                                                    if ($url_count >= $start_position && $url_count < $end_position)
+                                                        $urls['items'][] = array('link_type' => 'amphtml', 'post_type' => $post_type, 'link' => $amp_permalink);
+                                                    if ($url_count >= $end_position)
+                                                        break;
+                                                    $url_count++;
+                                                }
                                             }
                                         }
                                     }
