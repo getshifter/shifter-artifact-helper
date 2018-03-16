@@ -47,6 +47,8 @@ add_action( 'template_redirect', function() {
               if ( $url_count >= $start_position && $url_count < $end_position ) {
                   $urls['items'][] = array('link_type' => 'paginate_link', 'post_type' => '', 'link' => $paginate_link);
               }
+              if ($url_count >= $end_position)
+                  break;
               $url_count++;
             }
       }
@@ -151,12 +153,12 @@ add_action( 'template_redirect', function() {
                         continue;
                     if ($url_count >= $start_position && $url_count < $end_position)
                         $urls['items'][] = array('link_type' => 'post_type_archive_link', 'post_type' => $post_type, 'link' => $post_type_archive_link);
+                        $url_count++;
                     if ($url_count >= $end_position)
                         break;
 
                     $posts_by_type = get_posts( array('post_type' => $post_type, 'post_status' => 'publish', 'posts_per_page' => -1) );
                     $get_paginates($post_type_archive_link, count($posts_by_type) );
-                    $url_count++;
                 }
 
             }
