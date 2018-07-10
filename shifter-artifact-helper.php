@@ -267,6 +267,30 @@ add_action( 'template_redirect', function() {
           $get_paginates($term_link, $tag->count);
         }
 
+        // redirection link (redirection plugin)
+        if ($url_count < $end_position && class_exists('Red_Item')) {
+            $redirection_list = Red_Item::get_all();
+            foreach ( $redirection_list as $redirection ) {
+                if ( $redirection->is_enabled() && ! $redirection->is_regex() ) {
+                    $redirection_link = remove_query_arg(array('urls','max'), str_replace('&#038;', '&', $redirection->get_url()));
+                    if ( trailingslashit($redirection_link) === trailingslashit($home_url))
+                        continue;
+                    if ($url_count >= $start_position && $url_count < $end_position) {
+                        $urls['items'][] = array(
+                            'link_type' => 'redirection',
+                            'post_type' => '',
+                            'link' => $redirection_link,
+                            'redirect_to' => $redirection->get_action_data(),
+                            'redirect_code' => $redirection->get_action_code(),
+                        );
+                    }
+                    if ($url_count >= $end_position)
+                        break;
+                    $url_count++;
+                }
+            }
+        }
+
     } else if ( !is_single() ) {
         // pagenate links
         $paginate_links = paginate_links( array('show_all'=>true) );
