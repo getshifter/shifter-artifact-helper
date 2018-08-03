@@ -291,34 +291,6 @@ add_action( 'template_redirect', function() {
             }
         }
 
-        while ( have_posts() ) {
-            the_post();
-
-            // pagenate links
-            $paginate_links = wp_link_pages( array('echo' => false) );
-            if ( preg_match_all('/href=["\']([^"\']*)["\']/', $paginate_links, $matches, PREG_SET_ORDER) ) {
-                $pagenate_count = 0;
-                // remove duplicate entry (first page of nextpages)
-                array_shift($matches);
-                foreach ( $matches as $match ) {
-                    $paginate_link = remove_query_arg(array('urls','max'), str_replace('&#038;', '&', $match[1]));
-                    if ( trailingslashit($paginate_link) === trailingslashit($home_url))
-                        continue;
-                    if ( !preg_match('#/$#',$paginate_link) )
-                        continue;
-                    if ( $url_count >= $start_position && $url_count < $end_position ) {
-                        $post_type = get_post_type();
-                        $urls['items'][] = array('link_type' => 'paginate_link', 'post_type' => $post_type ? $post_type : '', 'link' => $paginate_link);
-                    }
-                    if ($url_count >= $end_position)
-                        break;
-                    $pagenate_count++;
-                    $url_count++;
-                }
-            }
-            unset($matches);
-        }
-
     } else if ( !is_single() ) {
         // pagenate links
         $paginate_links = paginate_links( array('show_all'=>true) );
