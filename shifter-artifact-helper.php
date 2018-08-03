@@ -425,7 +425,7 @@ add_action( 'template_redirect', function() {
 }, 1);
 
 function shifter_add_settings_menu(){
-    add_menu_page( 'Shifter Settings', 'Shifter Settings', 'administrator', __FILE__, 'shifter_settings_page' , 'https://getshifter.io/shifter-20x20.png' );
+    add_menu_page( 'Shifter Settings', 'Shifter Settings', 'administrator', __FILE__, 'shifter_settings_page' , '/wp-content/mu-plugins/shifter-support-plugin/dist/images/shifter-icon.png' );
     add_action( 'admin_init', 'shifter_register_settings' );
 }
 
