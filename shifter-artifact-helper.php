@@ -118,7 +118,6 @@ add_action( 'template_redirect', function() {
                                 $pcount = mb_substr_count($post_content, '<!--nextpage-->');
                                 $pagenate_links = paginate_links(array('base'=>"{$permalink}%_%", 'format'=>'%#%/', 'total'=> $pcount + 1, 'show_all' => true));
                                 if ( preg_match_all('/class=["\']page-numbers["\'][\s]+href=["\']([^"\']*)["\']/', $pagenate_links, $pg_matches, PREG_SET_ORDER) ) {
-                                    // echo(var_dump($pg_matches));
                                     foreach ( $pg_matches as $pg_match ) {
                                         $paginate_link = remove_query_arg(array('urls','max'), str_replace('&#038;', '&', $pg_match[1]));
                                         if ( $url_count >= $start_position && $url_count < $end_position ) {
