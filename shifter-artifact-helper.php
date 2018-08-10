@@ -11,9 +11,9 @@ License: GPLv2 or later
 
 add_action( 'template_redirect', function() {
     if ( !isset($_GET['urls']) ) {
-        if ( preg_match('#/shifter_404\.html/?$#i', $_SERVER('REQUEST_URI')) ) {
+        if ( preg_match('#/shifter_404\.html/?$#i', $_SERVER['REQUEST_URI']) ) {
             header("HTTP/1.1 404 Not Found");
-            $overridden_template = locate_template( 'some-template.php' );
+            $overridden_template = locate_template( '404.php' );
             load_template( $overridden_template );
             die();
         } else {
@@ -62,7 +62,7 @@ add_action( 'template_redirect', function() {
       unset($pg_matches);
     };
 
-    if ( preg_match('#/shifter_404\.html/?$#i', $_SERVER('REQUEST_URI')) ) {
+    if ( preg_match('#/shifter_404\.html/?$#i', $_SERVER['REQUEST_URI']) ) {
         $urls['items'] = array();
         $url_count = 0;
 
