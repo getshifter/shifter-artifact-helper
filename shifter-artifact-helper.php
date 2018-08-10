@@ -3,15 +3,17 @@
 Plugin Name: Shifter – Artifact Helper
 Plugin URI: https://github.com/getshifter/shifter-artifact-helper
 Description: Helper tool for building Shifter Artifacts
-Version: 0.9.5
+Version: 0.9.6
 Author: Shifter Team
 Author URI: https://getshifter.io
 License: GPLv2 or later
 */
 
 add_action( 'template_redirect', function() {
+    $request_uri = esc_html(remove_query_arg(array('urls','max'), $_SERVER['REQUEST_URI']));
+
     if ( !isset($_GET['urls']) ) {
-        if ( preg_match('#/shifter_404\.html/?$#i', $_SERVER['REQUEST_URI']) ) {
+        if ( preg_match('#/shifter_404\.html/?$#i', $request_uri) ) {
             header("HTTP/1.1 404 Not Found");
             $overridden_template = locate_template( '404.php' );
             if ( ! file_exists($overridden_template) ) {
@@ -27,6 +29,7 @@ add_action( 'template_redirect', function() {
     global $wpdb;
     $delimiter = ',';
     $url_count = 0;
+    $transient_expires = 3600;
 
     $page  = is_numeric($_GET['urls']) ? intval($_GET['urls']) : 0;
     $limit = (isset($_GET['max']) && is_numeric($_GET['max'])) ? intval($_GET['max']) : 100;
@@ -66,9 +69,9 @@ add_action( 'template_redirect', function() {
     };
 
     $home_url = home_url( '/' );
-    $current_url = home_url(esc_html($_SERVER["REQUEST_URI"]));
+    $current_url = home_url($request_uri);
 
-    if ( preg_match('#/shifter_404\.html/?$#i', $_SERVER['REQUEST_URI']) ) {
+    if ( preg_match('#/shifter_404\.html/?$#i', $request_uri) ) {
         $urls['items'] = array();
         $url_count = 0;
 
@@ -104,11 +107,15 @@ add_action( 'template_redirect', function() {
 
                 // post_type parmalink
                 if ($url_count < $end_position) {
-                    $sql = $wpdb->prepare(
-                        "SELECT ID FROM {$wpdb->posts} WHERE post_type=%s AND post_status=%s ORDER BY post_date DESC",
-                        $post_type,
-                        $post_type !== 'attachment' ? 'publish' : 'inherit');
-                    $posts = $wpdb->get_results( $sql, OBJECT );;
+                    $transient_key = "shifter-helper-posts-{$post_type}";
+                    if ( false === ($posts = get_transient($transient_key)) ) {
+                        $sql = $wpdb->prepare(
+                            "SELECT ID FROM {$wpdb->posts} WHERE post_type=%s AND post_status=%s ORDER BY post_date DESC",
+                            $post_type,
+                            $post_type !== 'attachment' ? 'publish' : 'inherit');
+                        $posts = $wpdb->get_results( $sql, OBJECT );
+                        set_transient( $transient_key, $posts, $transient_expires );
+                    }
                     foreach ( $posts as $post ) {
                         if ( $permalink = get_permalink($post->ID) ) {
                             if ( trailingslashit($permalink) === trailingslashit($home_url))
@@ -180,7 +187,12 @@ add_action( 'template_redirect', function() {
                 }
 
                 // post_type archive link
-                if ( $post_type_archive_link = get_post_type_archive_link($post_type) ) {
+                $transient_key = "shifter-helper-post-archive-link-{$post_type}";
+                if ( false === ($post_type_archive_link = get_transient($transient_key)) ) {
+                    $post_type_archive_link = get_post_type_archive_link($post_type);
+                    set_transient( $transient_key, $post_type_archive_link, $transient_expires );
+                }
+                if ( $post_type_archive_link ) {
                     if ( trailingslashit($post_type_archive_link) === trailingslashit($home_url))
                         continue;
                     if ( !preg_match('#/$#',$post_type_archive_link) )
@@ -201,9 +213,17 @@ add_action( 'template_redirect', function() {
         if ($url_count < $end_position && get_option('shifter_skip_terms') !== 'yes') {
             foreach ( $post_types as $post_type ) {
                 // post_type term link
-                $taxonomy_names = get_object_taxonomies( $post_type );
+                $transient_key = "shifter-helper-taxonomy_names-{$post_type}";
+                if ( false === ($taxonomy_names = get_transient($transient_key)) ) {
+                    $taxonomy_names = get_object_taxonomies( $post_type );
+                    set_transient( $transient_key, $taxonomy_names, $transient_expires );
+                }
                 foreach ( $taxonomy_names as $taxonomy_name ) {
-                    $terms = get_terms( $taxonomy_name, 'orderby=count&hide_empty=1' );
+                    $transient_key = "shifter-helper-terms-{$post_type}-{$taxonomy_name}";
+                    if ( false === ($terms = get_transient($transient_key)) ) {
+                        $terms = get_terms( $taxonomy_name, 'orderby=count&hide_empty=1' );
+                        set_transient( $transient_key, $terms, $transient_expires );
+                    }
                     foreach ( $terms as $term ){
                         if ( $termlink = get_term_link( $term ) ) {
                             if ( trailingslashit($termlink) === trailingslashit($home_url))
@@ -226,7 +246,11 @@ add_action( 'template_redirect', function() {
         if ($url_count < $end_position) {
             foreach ( array('yearly','monthly','daily') as $archive_type ) {
                 if (get_option('shifter_skip_'.$archive_type) !== 'yes') {
-                    $archives_list = wp_get_archives(array('type'=>$archive_type,'format'=>'none','echo'=>0, 'show_post_count'=>true));
+                    $transient_key = "shifter-helper-archives-{$archive_type}";
+                    if ( false === ($archives_list = get_transient($transient_key)) ) {
+                        $archives_list = wp_get_archives(array('type'=>$archive_type,'format'=>'none','echo'=>0, 'show_post_count'=>true));
+                        set_transient( $transient_key, $archives_list, $transient_expires );
+                    }
                     if ( preg_match_all('/href=["\']([^"\']*)["\'].+\((\d+)\)/', $archives_list, $matches, PREG_SET_ORDER) ) {
                         foreach ( $matches as $match ) {
                             $archive_link = remove_query_arg(array('urls','max'), str_replace('&#038;', '&', $match[1]));
@@ -249,7 +273,11 @@ add_action( 'template_redirect', function() {
 
         // pagenate links
         if ($url_count < $end_position) {
-            $paginate_links = paginate_links( array('show_all'=>true) );
+            $transient_key = "shifter-helper-paginate";
+            if ( false === ($paginate_links = get_transient($transient_key)) ) {
+                $paginate_links = paginate_links( array('show_all'=>true) );
+                set_transient( $transient_key, $paginate_links, $transient_expires );
+            }
             if ( preg_match_all('/class=["\']page-numbers["\'][\s]+href=["\']([^"\']*)["\']/', $paginate_links, $matches, PREG_SET_ORDER) ) {
                 foreach ( $matches as $match ) {
                     $paginate_link = remove_query_arg(array('urls','max'), str_replace('&#038;', '&', $match[1]));
@@ -269,7 +297,11 @@ add_action( 'template_redirect', function() {
 
         // authors link
         if ($url_count < $end_position && get_option('shifter_skip_author') !== 'yes') {
-            $authors_list = wp_list_authors(array('style'=>'none','echo'=>false));
+            $transient_key = "shifter-helper-authors";
+            if ( false === ($authors_list = get_transient($transient_key)) ) {
+                $authors_list = wp_list_authors(array('style'=>'none','echo'=>false));
+                set_transient( $transient_key, $authors_list, $transient_expires );
+            }
             if ( preg_match_all('/href=["\']([^"\']*)["\']/', $authors_list, $matches, PREG_SET_ORDER) ) {
                 foreach ( $matches as $match ) {
                     $author_link = remove_query_arg(array('urls','max'), str_replace('&#038;', '&', $match[1]));
@@ -288,14 +320,22 @@ add_action( 'template_redirect', function() {
         }
 
         // paginated category
-        $category_list = get_categories();
+        $transient_key = "shifter-helper-category_list";
+        if ( false === ($category_list = get_transient($transient_key)) ) {
+            $category_list = get_categories();
+            set_transient( $transient_key, $category_list, $transient_expires );
+        }
         foreach ($category_list as $cat) {
-          $term_link = get_term_link($cat);
-          $get_paginates($term_link, $cat->count);
+            $term_link = get_term_link($cat);
+            $get_paginates($term_link, $cat->count);
         }
 
         // paginated tag
-        $tag_list = get_tags();
+        $transient_key = "shifter-helper-tag_list";
+        if ( false === ($tag_list = get_transient($transient_key)) ) {
+            $tag_list = get_tags();
+            set_transient( $transient_key, $tag_list, $transient_expires );
+        }
         foreach ($tag_list as $tag) {
           $term_link = get_term_link($tag);
           $get_paginates($term_link, $tag->count);
@@ -303,7 +343,11 @@ add_action( 'template_redirect', function() {
 
         // redirection link (redirection plugin)
         if ($url_count < $end_position && class_exists('Red_Item')) {
-            $redirection_list = Red_Item::get_all();
+            $transient_key = "shifter-helper-redirection_list";
+            if ( false === ($redirection_list = get_transient($transient_key)) ) {
+                $redirection_list = Red_Item::get_all();
+                set_transient( $transient_key, $redirection_list, $transient_expires );
+            }
             foreach ( $redirection_list as $redirection ) {
                 if ( $redirection->is_enabled() && ! $redirection->is_regex() ) {
                     $redirection_link = remove_query_arg(array('urls','max'), str_replace('&#038;', '&', $redirection->get_url()));
@@ -331,7 +375,11 @@ add_action( 'template_redirect', function() {
 
     } else if ( !is_single() ) {
         // pagenate links
-        $paginate_links = paginate_links( array('show_all'=>true) );
+        $transient_key = "shifter-helper-paginate_links-{$request_uri}";
+        if ( false === ($paginate_links = get_transient($transient_key)) ) {
+            $paginate_links = paginate_links( array('show_all'=>true) );
+            set_transient( $transient_key, $paginate_links, $transient_expires );
+        }
         if ( preg_match_all('/class=["\']page-numbers["\'][\s]+href=["\']([^"\']*)["\']/', $paginate_links, $matches, PREG_SET_ORDER) ) {
             $pagenate_count = 0;
             foreach ( $matches as $match ) {
