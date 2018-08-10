@@ -3,7 +3,7 @@
 Plugin Name: Shifter – Artifact Helper
 Plugin URI: https://github.com/getshifter/shifter-artifact-helper
 Description: Helper tool for building Shifter Artifacts
-Version: 0.9.3
+Version: 0.9.4
 Author: Shifter Team
 Author URI: https://getshifter.io
 License: GPLv2 or later
@@ -11,7 +11,14 @@ License: GPLv2 or later
 
 add_action( 'template_redirect', function() {
     if ( !isset($_GET['urls']) ) {
-        return;
+        if ( preg_match('#/shifter_404\.html/?$#i', $_SERVER('REQUEST_URI')) ) {
+            header("HTTP/1.1 404 Not Found");
+            $overridden_template = locate_template( 'some-template.php' );
+            load_template( $overridden_template );
+            die();
+        } else {
+            return;
+        }
     }
 
     global $wpdb;
@@ -55,7 +62,11 @@ add_action( 'template_redirect', function() {
       unset($pg_matches);
     };
 
-    if ( is_front_page() ) {
+    if ( preg_match('#/shifter_404\.html/?$#i', $_SERVER('REQUEST_URI')) ) {
+        $urls['items'] = array();
+        $url_count = 0;
+
+    } else if ( is_front_page() ) {
         // top page link
         $home_url = home_url( '/' );
         if ( $url_count >= $start_position && $url_count < $end_position ) {
