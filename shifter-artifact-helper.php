@@ -14,6 +14,9 @@ add_action( 'template_redirect', function() {
         if ( preg_match('#/shifter_404\.html/?$#i', $_SERVER['REQUEST_URI']) ) {
             header("HTTP/1.1 404 Not Found");
             $overridden_template = locate_template( '404.php' );
+            if ( ! file_exists($overridden_template) ) {
+                $overridden_template = locate_template( 'index.php' );
+            }
             load_template( $overridden_template );
             die();
         } else {
