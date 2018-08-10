@@ -75,7 +75,7 @@ add_action( 'template_redirect', function() {
         $urls['items'] = array();
         $url_count = 0;
 
-    } else if ( is_front_page() && $home_url === $current_url ) {
+    } else if ( is_front_page() && preg_replace('#^https://[^/]+/#','/',$home_url) === preg_replace('#^https://[^/]+/#','/',$current_url) ) {
         // top page link
         if ( $url_count >= $start_position && $url_count < $end_position ) {
             $urls['items'][$url_count] = array('link_type' => 'home', 'post_type' => '', 'link' => $home_url);
