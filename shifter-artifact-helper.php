@@ -3,7 +3,7 @@
 Plugin Name: Shifter – Artifact Helper
 Plugin URI: https://github.com/getshifter/shifter-artifact-helper
 Description: Helper tool for building Shifter Artifacts
-Version: 0.9.7
+Version: 0.9.8
 Author: Shifter Team
 Author URI: https://getshifter.io
 License: GPLv2 or later
@@ -31,8 +31,14 @@ add_action( 'template_redirect', function() {
     $url_count = 0;
     $transient_expires = 300;
 
-    $page  = is_numeric($_GET['urls']) ? intval($_GET['urls']) : 0;
-    $limit = (isset($_GET['max']) && is_numeric($_GET['max'])) ? intval($_GET['max']) : 100;
+    $page  =
+        is_numeric($_GET['urls'])
+        ? intval($_GET['urls'])
+        : 0;
+    $limit =
+        (isset($_GET['max']) && is_numeric($_GET['max']))
+        ? intval($_GET['max'])
+        : 100;
     $start_position = $page * $limit;
     $end_position   = $start_position + $limit;
 
@@ -77,7 +83,6 @@ add_action( 'template_redirect', function() {
 
     } else if ( is_front_page() && preg_replace('#^https://[^/]+/#','/',$home_url) === preg_replace('#^https://[^/]+/#','/',$current_url) ) {
         // top page link
-        $home_url = home_url( '/' );
         if ( $url_count >= $start_position && $url_count < $end_position ) {
             $urls['items'][$url_count] = array('link_type' => 'home', 'post_type' => '', 'link' => $home_url);
             $urls['items'][$url_count+1] = array('link_type' => '404', 'post_type' => '', 'link' => $home_url.'shifter_404.html');
@@ -118,9 +123,14 @@ add_action( 'template_redirect', function() {
                         set_transient( $transient_key, $posts, $transient_expires );
                     }
                     foreach ( $posts as $post ) {
+                        if ($url_count < $start_position) {
+                            $url_count++;
+                            continue;
+                        }
                         if ( $permalink = get_permalink($post->ID) ) {
-                            if ( trailingslashit($permalink) === trailingslashit($home_url))
+                            if ( trailingslashit($permalink) === trailingslashit($home_url)) {
                                 continue;
+                            }
                             if ( !preg_match('#/$#',$permalink) ) {
                                 if ( $post_type !== 'attachment' ) {
                                     //unset($urls['items']);
@@ -201,7 +211,7 @@ add_action( 'template_redirect', function() {
                         continue;
                     if ($url_count >= $start_position && $url_count < $end_position)
                         $urls['items'][] = array('link_type' => 'post_type_archive_link', 'post_type' => $post_type, 'link' => $post_type_archive_link);
-                        $url_count++;
+                    $url_count++;
                     if ($url_count >= $end_position)
                         break;
 
