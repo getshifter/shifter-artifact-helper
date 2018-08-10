@@ -65,13 +65,15 @@ add_action( 'template_redirect', function() {
       unset($pg_matches);
     };
 
+    $home_url = home_url( '/' );
+    $current_url = home_url(esc_html($_SERVER["REQUEST_URI"]));
+
     if ( preg_match('#/shifter_404\.html/?$#i', $_SERVER['REQUEST_URI']) ) {
         $urls['items'] = array();
         $url_count = 0;
 
-    } else if ( is_front_page() ) {
+    } else if ( is_front_page() && $home_url === $current_url ) {
         // top page link
-        $home_url = home_url( '/' );
         if ( $url_count >= $start_position && $url_count < $end_position ) {
             $urls['items'][$url_count] = array('link_type' => 'home', 'post_type' => '', 'link' => $home_url);
             $urls['items'][$url_count+1] = array('link_type' => '404', 'post_type' => '', 'link' => $home_url.'shifter_404.html');
@@ -127,24 +129,23 @@ add_action( 'template_redirect', function() {
                                     break;
                                 $url_count++;
 
-                                // Commented out due to performance problem
-                                // // has <!--nexpage--> ?
-                                // $post_content = get_post_field( 'post_content', $post->ID, 'raw' );
-                                // $pcount = mb_substr_count($post_content, '<!--nextpage-->');
-                                // $pagenate_links = paginate_links(array('base'=>"{$permalink}%_%", 'format'=>'%#%/', 'total'=> $pcount + 1, 'show_all' => true));
-                                // if ( preg_match_all('/class=["\']page-numbers["\'][\s]+href=["\']([^"\']*)["\']/', $pagenate_links, $pg_matches, PREG_SET_ORDER) ) {
-                                //     foreach ( $pg_matches as $pg_match ) {
-                                //         $paginate_link = remove_query_arg(array('urls','max'), str_replace('&#038;', '&', $pg_match[1]));
-                                //         if ( $url_count >= $start_position && $url_count < $end_position ) {
-                                //             $urls['items'][] = array('link_type' => 'paginate_link', 'post_type' => '', 'link' => $paginate_link);
+                                // has <!--nexpage--> ?
+                                $post_content = get_post_field( 'post_content', $post->ID, 'raw' );
+                                $pcount = mb_substr_count($post_content, '<!--nextpage-->');
+                                $pagenate_links = paginate_links(array('base'=>"{$permalink}%_%", 'format'=>'%#%/', 'total'=> $pcount + 1, 'show_all' => true));
+                                if ( preg_match_all('/class=["\']page-numbers["\'][\s]+href=["\']([^"\']*)["\']/', $pagenate_links, $pg_matches, PREG_SET_ORDER) ) {
+                                    foreach ( $pg_matches as $pg_match ) {
+                                        $paginate_link = remove_query_arg(array('urls','max'), str_replace('&#038;', '&', $pg_match[1]));
+                                        if ( $url_count >= $start_position && $url_count < $end_position ) {
+                                            $urls['items'][] = array('link_type' => 'paginate_link', 'post_type' => '', 'link' => $paginate_link);
 
-                                //         }
-                                //         if ($url_count >= $end_position)
-                                //             break;
-                                //         $url_count++;
-                                //     }
-                                // }
-                                // unset($pg_matches);
+                                        }
+                                        if ($url_count >= $end_position)
+                                            break;
+                                        $url_count++;
+                                    }
+                                }
+                                unset($pg_matches);
 
                                 // Detect Automattic AMP
                                 if ( function_exists( 'amp_get_permalink' ) ) {
@@ -323,6 +324,10 @@ add_action( 'template_redirect', function() {
                 }
             }
         }
+
+    } else if ( is_front_page() ) {
+        $urls['items'] = array();
+        $url_count = 0;
 
     } else if ( !is_single() ) {
         // pagenate links
