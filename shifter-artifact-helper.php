@@ -3,7 +3,7 @@
 Plugin Name: Shifter – Artifact Helper
 Plugin URI: https://github.com/getshifter/shifter-artifact-helper
 Description: Helper tool for building Shifter Artifacts
-Version: 0.9.4
+Version: 0.9.5
 Author: Shifter Team
 Author URI: https://getshifter.io
 License: GPLv2 or later
@@ -127,23 +127,24 @@ add_action( 'template_redirect', function() {
                                     break;
                                 $url_count++;
 
-                                // has <!--nexpage--> ?
-                                $post_content = get_post_field( 'post_content', $post->ID, 'raw' );
-                                $pcount = mb_substr_count($post_content, '<!--nextpage-->');
-                                $pagenate_links = paginate_links(array('base'=>"{$permalink}%_%", 'format'=>'%#%/', 'total'=> $pcount + 1, 'show_all' => true));
-                                if ( preg_match_all('/class=["\']page-numbers["\'][\s]+href=["\']([^"\']*)["\']/', $pagenate_links, $pg_matches, PREG_SET_ORDER) ) {
-                                    foreach ( $pg_matches as $pg_match ) {
-                                        $paginate_link = remove_query_arg(array('urls','max'), str_replace('&#038;', '&', $pg_match[1]));
-                                        if ( $url_count >= $start_position && $url_count < $end_position ) {
-                                            $urls['items'][] = array('link_type' => 'paginate_link', 'post_type' => '', 'link' => $paginate_link);
+                                // Commented out due to performance problem
+                                // // has <!--nexpage--> ?
+                                // $post_content = get_post_field( 'post_content', $post->ID, 'raw' );
+                                // $pcount = mb_substr_count($post_content, '<!--nextpage-->');
+                                // $pagenate_links = paginate_links(array('base'=>"{$permalink}%_%", 'format'=>'%#%/', 'total'=> $pcount + 1, 'show_all' => true));
+                                // if ( preg_match_all('/class=["\']page-numbers["\'][\s]+href=["\']([^"\']*)["\']/', $pagenate_links, $pg_matches, PREG_SET_ORDER) ) {
+                                //     foreach ( $pg_matches as $pg_match ) {
+                                //         $paginate_link = remove_query_arg(array('urls','max'), str_replace('&#038;', '&', $pg_match[1]));
+                                //         if ( $url_count >= $start_position && $url_count < $end_position ) {
+                                //             $urls['items'][] = array('link_type' => 'paginate_link', 'post_type' => '', 'link' => $paginate_link);
 
-                                        }
-                                        if ($url_count >= $end_position)
-                                            break;
-                                        $url_count++;
-                                    }
-                                }
-                                unset($pg_matches);
+                                //         }
+                                //         if ($url_count >= $end_position)
+                                //             break;
+                                //         $url_count++;
+                                //     }
+                                // }
+                                // unset($pg_matches);
 
                                 // Detect Automattic AMP
                                 if ( function_exists( 'amp_get_permalink' ) ) {
