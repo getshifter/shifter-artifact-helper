@@ -29,7 +29,7 @@ add_action( 'template_redirect', function() {
     global $wpdb;
     $delimiter = ',';
     $url_count = 0;
-    $transient_expires = 3600;
+    $transient_expires = 300;
 
     $page  = is_numeric($_GET['urls']) ? intval($_GET['urls']) : 0;
     $limit = (isset($_GET['max']) && is_numeric($_GET['max'])) ? intval($_GET['max']) : 100;
