@@ -85,8 +85,8 @@ add_action( 'template_redirect', function() {
         // top page link
         if ( $url_count >= $start_position && $url_count < $end_position ) {
             $urls['items'][$url_count] = array('link_type' => 'home', 'post_type' => '', 'link' => $home_url);
-            $url_count++;
             $urls['items'][$url_count+1] = array('link_type' => '404', 'post_type' => '', 'link' => $home_url.'shifter_404.html');
+            $url_count++;
             $url_count++;
         }
 
