@@ -382,6 +382,8 @@ add_action( 'template_redirect', function() {
                         }
                         if (is_array($redirect_action) || empty($redirect_action))
                             continue;
+                        if (! preg_match('#^(https?://|/)#i',$redirect_action))
+                            $redirect_action = '/'.$redirect_action;
                         $urls['items'][] = array(
                             'link_type' => 'redirection',
                             'post_type' => '',
