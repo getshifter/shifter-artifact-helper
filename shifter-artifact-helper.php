@@ -380,7 +380,7 @@ add_action( 'template_redirect', function() {
                                 }
                             }
                         }
-                        if (is_array($redirect_action))
+                        if (is_array($redirect_action) || empty($redirect_action))
                             continue;
                         $urls['items'][] = array(
                             'link_type' => 'redirection',
