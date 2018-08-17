@@ -86,9 +86,9 @@ add_action( 'template_redirect', function() {
         if ( $url_count >= $start_position && $url_count < $end_position ) {
             $urls['items'][$url_count] = array('link_type' => 'home', 'post_type' => '', 'link' => $home_url);
             $urls['items'][$url_count+1] = array('link_type' => '404', 'post_type' => '', 'link' => $home_url.'shifter_404.html');
-            $url_count++;
-            $url_count++;
         }
+        $url_count++;
+        $url_count++;
 
         if ($url_count < $end_position && get_option('shifter_skip_feed') !== 'yes') {
             foreach( array('rdf_url', 'rss_url', 'rss2_url', 'atom_url', 'comments_rss2_url') as $feed_type ) {
