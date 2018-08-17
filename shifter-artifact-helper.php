@@ -3,7 +3,7 @@
 Plugin Name: Shifter – Artifact Helper
 Plugin URI: https://github.com/getshifter/shifter-artifact-helper
 Description: Helper tool for building Shifter Artifacts
-Version: 0.9.9
+Version: 0.9.10
 Author: Shifter Team
 Author URI: https://getshifter.io
 License: GPLv2 or later
@@ -85,10 +85,10 @@ add_action( 'template_redirect', function() {
         // top page link
         if ( $url_count >= $start_position && $url_count < $end_position ) {
             $urls['items'][$url_count] = array('link_type' => 'home', 'post_type' => '', 'link' => $home_url);
+            $url_count++;
             $urls['items'][$url_count+1] = array('link_type' => '404', 'post_type' => '', 'link' => $home_url.'shifter_404.html');
+            $url_count++;
         }
-        $url_count++;
-        $url_count++;
 
         if ($url_count < $end_position && get_option('shifter_skip_feed') !== 'yes') {
             foreach( array('rdf_url', 'rss_url', 'rss2_url', 'atom_url', 'comments_rss2_url') as $feed_type ) {
@@ -361,21 +361,38 @@ add_action( 'template_redirect', function() {
             }
             foreach ( $redirection_list as $redirection ) {
                 if ( $redirection->is_enabled() && ! $redirection->is_regex() ) {
-                    $redirection_link = remove_query_arg(array('urls','max'), str_replace('&#038;', '&', $redirection->get_url()));
-                    if ( trailingslashit($redirection_link) === trailingslashit($home_url))
+                    $redirection_link = trailingslashit(remove_query_arg(
+                        array('urls','max'),
+                        str_replace('&#038;', '&', $redirection->get_url())
+                    ));
+                    if ( $redirection_link === trailingslashit($home_url))
                         continue;
                     if ($url_count >= $start_position && $url_count < $end_position) {
+                        $redirect_action = maybe_unserialize($redirection->get_action_data());
+                        $redirect_code   = (int)$redirection->get_action_code();
+                        if ($redirect_code < 300 || $redirect_code > 400)
+                            continue;
+                        if (is_array($redirect_action)) {
+                            foreach( ['logged_out','url_notfrom'] as $key) {
+                                if (isset($redirect_action[$key])) {
+                                    $redirect_action = $redirect_action[$key];
+                                    break;
+                                }
+                            }
+                        }
+                        if (is_array($redirect_action))
+                            continue;
                         $urls['items'][] = array(
                             'link_type' => 'redirection',
                             'post_type' => '',
                             'link' => $redirection_link,
-                            'redirect_to' => $redirection->get_action_data(),
-                            'redirect_code' => $redirection->get_action_code(),
+                            'redirect_to' => $redirect_action,
+                            'redirect_code' => $redirect_code,
                         );
+                        $url_count++;
                     }
                     if ($url_count >= $end_position)
                         break;
-                    $url_count++;
                 }
             }
         }
