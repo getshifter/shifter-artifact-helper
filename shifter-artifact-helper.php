@@ -123,10 +123,6 @@ add_action( 'template_redirect', function() {
                         set_transient( $transient_key, $posts, $transient_expires );
                     }
                     foreach ( $posts as $post ) {
-                        if ($url_count < $start_position) {
-                            $url_count++;
-                            continue;
-                        }
                         if ( $permalink = get_permalink($post->ID) ) {
                             if ( trailingslashit($permalink) === trailingslashit($home_url)) {
                                 continue;
