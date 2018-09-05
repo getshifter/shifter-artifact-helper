@@ -363,7 +363,7 @@ add_action( 'template_redirect', function() {
                     ));
                     if ( $redirection_link === trailingslashit($home_url))
                         continue;
-                    if ($url_count >= $start_position && $url_count < $end_position) {
+                    if ($url_count < $end_position) {
                         $redirect_action = maybe_unserialize($redirection->get_action_data());
                         $redirect_code   = (int)$redirection->get_action_code();
                         if ($redirect_code < 300 || $redirect_code > 400)
@@ -380,13 +380,15 @@ add_action( 'template_redirect', function() {
                             continue;
                         if (! preg_match('#^(https?://|/)#i',$redirect_action))
                             $redirect_action = '/'.$redirect_action;
-                        $urls['items'][] = array(
-                            'link_type' => 'redirection',
-                            'post_type' => '',
-                            'link' => $redirection_link,
-                            'redirect_to' => $redirect_action,
-                            'redirect_code' => $redirect_code,
-                        );
+                        if ($url_count >= $start_position) {
+                            $urls['items'][] = array(
+                                'link_type' => 'redirection',
+                                'post_type' => '',
+                                'link' => $redirection_link,
+                                'redirect_to' => $redirect_action,
+                                'redirect_code' => $redirect_code,
+                            );
+                        }
                         $url_count++;
                     }
                     if ($url_count >= $end_position)
