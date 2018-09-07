@@ -3,11 +3,14 @@
 Plugin Name: Shifter – Artifact Helper
 Plugin URI: https://github.com/getshifter/shifter-artifact-helper
 Description: Helper tool for building Shifter Artifacts
-Version: 0.9.13
+Version: 0.9.14
 Author: Shifter Team
 Author URI: https://getshifter.io
 License: GPLv2 or later
 */
+
+// remove /index.php/ from Permalink
+add_filter('got_rewrite','__return_true');
 
 add_action( 'template_redirect', function() {
     $request_uri = esc_html(remove_query_arg(array('urls','max'), $_SERVER['REQUEST_URI']));
