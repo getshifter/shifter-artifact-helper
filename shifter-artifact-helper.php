@@ -457,6 +457,11 @@ add_action( 'template_redirect', function() {
     $urls['finished'] = $urls['count'] < $limit;
     if ( $urls['count'] <= 0) {
         header("HTTP/1.1 404 Not Found");
+    } else {
+        error_log('');
+        foreach ($urls['items'] as $item) {
+            error_log(json_encode($item));
+        }
     }
 
     echo json_encode($urls);
