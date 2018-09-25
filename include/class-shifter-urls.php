@@ -301,8 +301,14 @@ class ShifterUrls {
 
             $key = __METHOD__."-{$post_type}";
             if (false === ($posts = $this->_get_transient($key))) {
+                $sql =
+                    "SELECT ID".
+                    " FROM {$wpdb->posts}".
+                    " WHERE post_type=%s AND post_status=%s".
+                    " ORDER BY post_date DESC"
+                    ;
                 $sql = $wpdb->prepare(
-                    "SELECT ID FROM {$wpdb->posts} WHERE post_type=%s AND post_status=%s ORDER BY post_date DESC",
+                    $sql,
                     $post_type,
                     $post_type !== 'attachment' ? 'publish' : 'inherit'
                 );
@@ -411,6 +417,8 @@ class ShifterUrls {
     // post_type archive link
     public function post_type_archive_urls($urls = array())
     {
+        global $wpdb;
+
         if (empty($urls)) {
             $urls = $this->get('urls');
         }
@@ -444,15 +452,20 @@ class ShifterUrls {
                 // pagenate links
                 $key = __METHOD__."-{$post_type}-pagenate";
                 if (false === ($pagenate_urls = $this->_get_transient($key))) {
-                    $posts_by_type = get_posts(
-                        [
-                            'post_type' => $post_type,
-                            'post_status' => 'publish',
-                            'posts_per_page' => -1
-                        ]
+                    $sql =
+                        "SELECT ID".
+                        " FROM {$wpdb->posts}".
+                        " WHERE post_type=%s AND post_status=%s"
+                        ;
+                    $sql = $wpdb->prepare(
+                        $sql,
+                        $post_type,
+                        $post_type !== 'attachment' ? 'publish' : 'inherit'
                     );
+                    $posts_by_type = $wpdb->get_results($sql, OBJECT);
                     $pagenate_urls = $this->_get_paginates($post_type_archive_link, count($posts_by_type) );
                     $this->_set_transient($key, $pagenate_urls);
+                    unset($posts_by_type);
                 }
                 foreach ($pagenate_urls as $pagenate_url) {
                     if ($this->_check_range()) {
@@ -472,6 +485,61 @@ class ShifterUrls {
 
         $this->set('urls', $urls);
         return $urls;
+    }
+
+    private function _get_term_taxonomy_slugs($term_taxonomy_id) {
+        global $wpdb;
+
+        $slugs = [];
+        $sql =
+            "SELECT tt.term_taxonomy_id,t.slug".
+            " FROM {$wpdb->terms} AS t".
+            " INNER JOIN {$wpdb->term_taxonomy} AS tt ON t.term_id = tt.term_id".
+            " WHERE tt.term_taxonomy_id=%d"
+            ;
+        $sql = $wpdb->prepare(
+            $sql,
+            $term_taxonomy_id
+        );
+        $results = $wpdb->get_results($sql, ARRAY_N);
+        if (!is_wp_error($results) && !empty($results)) {
+            foreach ($results as $term_taxonomy) {
+                $slugs[$term_taxonomy[0]] = $term_taxonomy[1];
+                $slugs = $this->_get_term_taxonomy_children(
+                    $term_taxonomy[0],
+                    $slugs
+                );
+            }
+        }
+        unset($results);
+        return $slugs;
+    }
+
+    private function _get_term_taxonomy_children($term_taxonomy_id, $slugs = []){
+        global $wpdb;
+
+        $sql =
+            "SELECT tt.term_taxonomy_id,t.slug".
+            " FROM {$wpdb->terms} AS t".
+            " INNER JOIN {$wpdb->term_taxonomy} AS tt ON t.term_id = tt.term_id".
+            " WHERE tt.parent=%d"
+            ;
+        $sql = $wpdb->prepare(
+            $sql,
+            $term_taxonomy_id
+        );
+        $results = $wpdb->get_results($sql, ARRAY_N);
+        if (!is_wp_error($results) && !empty($results)) {
+            foreach ($results as $term_taxonomy) {
+                $slugs[$term_taxonomy[0]] = $term_taxonomy[1];
+                $slugs = $this->_get_term_taxonomy_children(
+                    $term_taxonomy[0],
+                    $slugs
+                );
+            }
+        }
+        unset($results);
+        return $slugs;
     }
 
     // post_type term link
@@ -516,24 +584,30 @@ class ShifterUrls {
                         $this->increment('url_count');
 
                         // pagenate links
-                        $key = __METHOD__."-{$term->slug}-pagenate";
+                        $key = __METHOD__."-{$term->term_taxonomy_id}-pagenate";
                         if (false === ($pagenate_urls = $this->_get_transient($key))) {
-                            $posts_by_type = get_posts(
-                                [
-                                    'tax_query' =>
+                            $pagenate_urls = [];
+                            $slugs = $this->_get_term_taxonomy_slugs($term->term_taxonomy_id);
+                            if (!empty($slugs)) {
+                                $posts_by_type = get_posts(
                                     [
+                                        'tax_query' =>
                                         [
-                                            'taxonomy' => $term->taxonomy,
-                                            'field'    => 'slug',
-                                            'terms'    => [$term->slug],
-                                        ]
-                                    ],
-                                    'post_type' => $post_type,
-                                    'post_status' => 'publish',
-                                    'posts_per_page' => -1
-                                ]
-                            );
-                            $pagenate_urls = $this->_get_paginates($termlink, count($posts_by_type) );
+                                            [
+                                                'taxonomy' => $term->taxonomy,
+                                                'field'    => 'slug',
+                                                'terms'    => $slugs,
+                                            ]
+                                        ],
+                                        'post_type' => $post_type,
+                                        'post_status' => 'publish',
+                                        'posts_per_page' => -1
+                                    ]
+                                );
+                                $pagenate_urls = $this->_get_paginates($termlink, count($posts_by_type) );
+                                unset($posts_by_type);
+                            }
+                            unset($slugs);
                             $this->_set_transient($key, $pagenate_urls);
                         }
                         foreach ($pagenate_urls as $pagenate_url) {
