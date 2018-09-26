@@ -59,36 +59,36 @@ add_action('template_redirect', function () {
 
     } else if (is_front_page() && preg_replace('#^https://[^/]+/#', '/', $home_url) === preg_replace('#^https://[^/]+/#', '/', $request_uri)) {
         // top page & feed links
-        $urls = $shifter_urls->top_page_urls($urls);
+        $shifter_urls->top_page_urls($urls);
 
         // posts links
-        $urls = $shifter_urls->posts_urls($urls);
+        $shifter_urls->posts_urls($urls);
 
         // archive links
-        $urls = $shifter_urls->post_type_archive_urls($urls);
+        $shifter_urls->post_type_archive_urls($urls);
 
         // term links
-        $urls = $shifter_urls->post_type_term_urls($urls);
+        $shifter_urls->post_type_term_urls($urls);
 
         // date archives
-        $urls = $shifter_urls->archive_urls($urls);
+        $shifter_urls->archive_urls($urls);
 
         // pagenate links
-        $urls = $shifter_urls->pagenate_urls($urls);
+        $shifter_urls->pagenate_urls($urls);
 
         // authors link
-        $urls = $shifter_urls->authors_urls($urls);
+        $shifter_urls->authors_urls($urls);
 
         // redirection link (redirection plugin)
-        $urls = $shifter_urls->redirection_urls($urls);
+        $shifter_urls->redirection_urls($urls);
 
     } else if (!is_singular()) {
         // pagenate links
-        $urls = $shifter_urls->pagenate_urls($urls, $request_uri);
+        $shifter_urls->pagenate_urls($urls, $request_uri);
 
     } else {
         // single page links
-        $urls = $shifter_urls->singlepage_pagenate_urls($urls, $request_uri);
+        $shifter_urls->singlepage_pagenate_urls($urls, $request_uri);
     }
 
     $urls['count'] = count($urls['items']);
