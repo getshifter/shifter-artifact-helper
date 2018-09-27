@@ -30,7 +30,7 @@ jobs:
       # - run: docker-compose up -d
       # - run: sleep 30
       # - run: curl -sk "https://127.0.0.1:8443/?urls=0&max=10"
-  deploy:
+  release:
     docker:
       - image: circleci/golang:latest
     working_directory: ~/test-shifter-artifact-helper
@@ -54,17 +54,17 @@ jobs:
 
 workflows:
   version: 2
-  build-and-deploy:
+  build-and-release:
     jobs:
       - build:
           filters:
             tags:
               only: /.*/
-      - deploy:
+      - release:
           requires:
             - build
-          filters:
-            branches:
-              only: master
-            tags:
-              only: /^v.*/
+          # filters:
+          #   branches:
+          #     only: master
+          #   tags:
+          #     only: /^v.*/
