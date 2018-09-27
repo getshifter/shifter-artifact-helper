@@ -37,6 +37,16 @@ jobs:
     steps:
       - checkout
       - run: go get -u github.com/tcnksm/ghr
+      - run:
+          name: tag deploy
+          command: |
+            if [ "${CIRCLE_TAG-NONE}" != "NONE" ]; then
+              tar -cvzf shifter-artifact-helper.${CIRCLE_TAG}.tgz -T files
+              ghr -v
+            else
+              tar -cvzf shifter-artifact-helper.${CIRCLE_BRANCH}.tgz -T files
+              echo skipped
+            fi
 
 workflows:
   version: 2
