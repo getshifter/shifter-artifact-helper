@@ -40,13 +40,17 @@ jobs:
       - run:
           name: tag deploy
           command: |
+            mkdir -p pkg
             if [ "${CIRCLE_TAG-NONE}" != "NONE" ]; then
-              tar -cvzf shifter-artifact-helper.${CIRCLE_TAG}.tgz -T files
+              tar -cvzf pkg/shifter-artifact-helper.${CIRCLE_TAG}.tgz -T files
               ghr -v
             else
-              tar -cvzf shifter-artifact-helper.${CIRCLE_BRANCH}.tgz -T files
+              tar -cvzf pkg/shifter-artifact-helper.${CIRCLE_BRANCH}.tgz -T files
               echo skipped
             fi
+      - store_artifacts:
+          path: ~/test-shifter-artifact-helper/pkg
+          destination: pkg
 
 workflows:
   version: 2
