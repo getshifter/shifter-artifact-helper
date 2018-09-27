@@ -38,7 +38,7 @@ jobs:
       - checkout
       - run: go get -u github.com/tcnksm/ghr
       - run:
-          name: tag deploy
+          name: tag release
           command: |
             mkdir -p pkg
             if [ "${CIRCLE_TAG-NONE}" != "NONE" ]; then
@@ -63,8 +63,8 @@ workflows:
       - release:
           requires:
             - build
-          # filters:
+          filters:
           #   branches:
           #     only: master
-          #   tags:
-          #     only: /^v.*/
+            tags:
+              only: /.*/
