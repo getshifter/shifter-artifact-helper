@@ -3,17 +3,17 @@ version: 2
 jobs:
   build:
     machine: true
-    working_directory: ~/test-shifter-artifact-helper
+    working_directory: ~/shifter-artifact-helper
     steps:
       - checkout
-      # - run:
-      #     name: Enable experimental features of DockerDeamon
-      #     command: |
-      #       set -x
-      #       echo 'DOCKER_OPTS="--experimental=true"' | sudo tee -a /etc/default/docker
-      #       export DEBIAN_FRONTEND=noninteractive
-      #       sudo apt-get update && sudo apt-get install -y docker-ce jq
-      #       sudo service docker restart
+      - run:
+          name: Enable experimental features of DockerDeamon
+          command: |
+            set -x
+            echo 'DOCKER_OPTS="--experimental=true"' | sudo tee -a /etc/default/docker
+            export DEBIAN_FRONTEND=noninteractive
+            sudo apt-get update && sudo apt-get install -y docker-ce jq
+            sudo service docker restart
       - run:
           name: Install Docker Compose
           command: |
@@ -39,7 +39,7 @@ jobs:
   release:
     docker:
       - image: circleci/golang:latest
-    working_directory: ~/test-shifter-artifact-helper
+    working_directory: ~/shifter-artifact-helper
     steps:
       - checkout
       - run: go get -u github.com/tcnksm/ghr
@@ -56,7 +56,7 @@ jobs:
               echo skipped
             fi
       - store_artifacts:
-          path: ~/test-shifter-artifact-helper/pkg
+          path: ~/shifter-artifact-helper/pkg
           destination: pkg
 
 workflows:

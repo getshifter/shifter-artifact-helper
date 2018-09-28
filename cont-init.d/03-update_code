@@ -1,5 +1,5 @@
 #!/usr/bin/with-contenv bash
 
-set -e
+set -ex
 rm -rf /var/www/html/web/wp/wp-content/mu-plugins/shifter-artifact-helper
 cp -r /usr/local/src/shifter-artifact-helper /var/www/html/web/wp/wp-content/mu-plugins/
