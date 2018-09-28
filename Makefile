@@ -5,4 +5,7 @@ pkg:
 	rm -f shifter-artifact-helper.tgz
 	tar -cvzf shifter-artifact-helper.tgz -T files
 
-.PHONY: list pkg
+clean:
+	rm -rf volume/app/mu-plugins/*
+
+.PHONY: list pkg clean
