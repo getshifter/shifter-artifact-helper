@@ -44,7 +44,7 @@ jobs:
             if [ "${CIRCLE_TAG-NONE}" != "NONE" ]; then
               tar -cvzf pkg/shifter-artifact-helper.tgz -T files
               ghr -v
-              ghr ${CIRCLE_TAG} pkg/
+              ghr -replace ${CIRCLE_TAG} pkg/
             else
               tar -cvzf pkg/shifter-artifact-helper.${CIRCLE_BRANCH}.tgz -T files
               echo skipped
