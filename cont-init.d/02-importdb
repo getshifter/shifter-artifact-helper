@@ -1,0 +1,6 @@
+#!/usr/bin/with-contenv bash
+
+dockerize -wait tcp://mysql:3306
+
+cd /var/www/html/web/wp || exit 1
+sudo -u www-data /usr/local/bin/wp db import /mnt/dump/wp.sql
