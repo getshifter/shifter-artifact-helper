@@ -1,9 +1,9 @@
 *.*
 **/**
 .*/**
-!cont-init.d/**
-!fix-attrs.d/**
-!scripts/**
-!volume/app/**
-!volume/dump/**
+!integration_test/docker/cont-init.d/**
+!integration_test/docker/fix-attrs.d/**
+!integration_test/docker/scripts/**
+!integration_test/volume/app/**
+!integration_test/volume/dump/**
 !shifter-artifact-helper.tgz
