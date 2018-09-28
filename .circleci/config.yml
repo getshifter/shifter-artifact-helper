@@ -34,8 +34,9 @@ jobs:
       - run:
           name: run test-unit
           command: |
+            cd integration_test
             bundle install
-            bundle exec ruby test/entry.rb
+            bundle exec ruby ./entry.rb
   release:
     docker:
       - image: circleci/golang:latest
