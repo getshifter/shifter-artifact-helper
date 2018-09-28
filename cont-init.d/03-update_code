@@ -1,5 +1,13 @@
 #!/usr/bin/with-contenv bash
 
-set -e
-rm -rf /var/www/html/web/wp/wp-content/mu-plugins/shifter-artifact-helper
-mv /usr/local/src/shifter-artifact-helper /var/www/html/web/wp/wp-content/mu-plugins/
+WWWROOT=/var/www/html/web/wp
+APP_BASE="/var/www/html/web/app_base"
+
+set -ex
+rm -rf ${WWWROOT}/wp-content/mu-plugins/*
+cp -fv ${APP_BASE}/mu-plugins/*.php ${WWWROOT}/wp-content/mu-plugins/
+
+cd /var/www/html
+sudo -u www-data composer install -v
+rm -rfv /var/www/html/web/wp/wp-content/mu-plugins/shifter-artifact-helper
+cp -rv /usr/local/src/shifter-artifact-helper /var/www/html/web/wp/wp-content/mu-plugins/
