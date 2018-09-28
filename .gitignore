@@ -55,4 +55,5 @@ build-iPhoneSimulator/
 ## add manually
 /pkg/
 /shifter-artifact-helper.tgz
-/volume/
+/volume/app/mu-plugins
+/volume/app/upgrade
