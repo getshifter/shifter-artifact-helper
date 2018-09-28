@@ -1,5 +1,7 @@
 #!/usr/bin/with-contenv bash
 
 set -ex
+cd /var/www/html
+sudo -u www-data composer install -v
 rm -rf /var/www/html/web/wp/wp-content/mu-plugins/shifter-artifact-helper
 cp -r /usr/local/src/shifter-artifact-helper /var/www/html/web/wp/wp-content/mu-plugins/
