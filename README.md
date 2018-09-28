@@ -14,6 +14,7 @@ Sandbox
 
 ```
 $ docker pull getshifter/shifter_local:develop
+$ make pkg
 $ docker-compose build
 $ docker-compose up
 ```
