@@ -1,5 +1,7 @@
 # Shifter Artifact Helper
 
+[![CircleCI](https://circleci.com/gh/getshifter/shifter-artifact-helper.svg?style=svg)](https://circleci.com/gh/getshifter/shifter-artifact-helper)
+
 Artifact helper tool for Shifter –  Serverless WordPress Hosting
 
 
