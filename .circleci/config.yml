@@ -27,9 +27,10 @@ jobs:
           environment:
             DOCKERIZE_VERSION: v0.6.1
       - run: make pkg
-      - run: docker-compose build
+      - run: docker-compose build --no-cache
       - run: docker-compose up -d
       - run: sleep 15
+      - run: curl -sk "https://127.0.0.1:8443/?urls=0&max=10"
       - run:
           name: run test-unit
           command: |
