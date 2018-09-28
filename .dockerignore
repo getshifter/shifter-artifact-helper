@@ -6,3 +6,4 @@
 !scripts/**
 !volume/app/**
 !volume/dump/**
+!shifter-artifact-helper.tgz
