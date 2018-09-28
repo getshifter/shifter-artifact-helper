@@ -31,6 +31,11 @@ jobs:
       - run: docker-compose up -d
       - run: sleep 30
       - run: curl -sk "https://127.0.0.1:8443/?urls=0&max=10"
+      - run:
+          name: run test-unit
+          command: |
+            bundle install
+            bundle exec ruby test/entry.rb
   release:
     docker:
       - image: circleci/golang:latest

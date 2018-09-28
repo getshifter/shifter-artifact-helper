@@ -2,4 +2,4 @@
 
 set -e
 rm -rf /var/www/html/web/wp/wp-content/mu-plugins/shifter-artifact-helper
-mv /usr/local/src/shifter-artifact-helper /var/www/html/web/wp/wp-content/mu-plugins/
+cp -r /usr/local/src/shifter-artifact-helper /var/www/html/web/wp/wp-content/mu-plugins/
