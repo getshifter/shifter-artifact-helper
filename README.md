@@ -17,7 +17,7 @@ Sandbox
 ```
 $ docker pull getshifter/shifter_local:develop
 $ make pkg
-$ docker-compose build
+$ docker-compose build --no-cache
 $ docker-compose up
 ```
 
@@ -26,7 +26,7 @@ open `https://127.0.0.1:8443`
 ### update contents for wp
 
 ```
-$ docker-compose build
+$ docker-compose build --no-cache
 $ docker-compose up
 ```
 
