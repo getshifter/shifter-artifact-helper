@@ -6,14 +6,14 @@ jobs:
     working_directory: ~/shifter-artifact-helper
     steps:
       - checkout
-      - run:
-          name: Enable experimental features of DockerDeamon
-          command: |
-            set -x
-            echo 'DOCKER_OPTS="--experimental=true"' | sudo tee -a /etc/default/docker
-            export DEBIAN_FRONTEND=noninteractive
-            sudo apt-get update && sudo apt-get install -y docker-ce jq
-            sudo service docker restart
+      # - run:
+      #     name: Enable experimental features of DockerDeamon
+      #     command: |
+      #       set -x
+      #       echo 'DOCKER_OPTS="--experimental=true"' | sudo tee -a /etc/default/docker
+      #       export DEBIAN_FRONTEND=noninteractive
+      #       sudo apt-get update && sudo apt-get install -y docker-ce jq
+      #       sudo service docker restart
       - run:
           name: Install Docker Compose
           command: |
@@ -29,7 +29,7 @@ jobs:
       - run: make pkg
       - run: docker-compose build --no-cache
       - run: docker-compose up -d
-      - run: sleep 15
+      - run: sleep 30
       - run: curl -sk "https://127.0.0.1:8443/?urls=0&max=10"
       - run:
           name: run test-unit

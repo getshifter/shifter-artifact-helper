@@ -7,9 +7,9 @@ services:
       - mysql
     ports:
       - 8443:443
-    # volumes:
-    #   - "./volume/app:/var/www/html/web/wp/wp-content"
-    #   - "./volume/dump:/mnt/dump"
+    volumes:
+      - "./volume/app:/var/www/html/web/wp/wp-content"
+      - "./volume/dump:/mnt/dump"
     environment:
       - SERVICE_PORT=8443
       - RDB_ENDPOINT=mysql:3306
