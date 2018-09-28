@@ -6,6 +6,6 @@ pkg: clean
 
 clean:
 	rm -f shifter-artifact-helper.tgz
-	rm -rf /integration_test/volume/app/mu-plugins/*
+	rm -rf integration_test/volume/app/mu-plugins/*
 
 .PHONY: list pkg clean
