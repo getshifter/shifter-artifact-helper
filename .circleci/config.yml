@@ -6,30 +6,30 @@ jobs:
     working_directory: ~/test-shifter-artifact-helper
     steps:
       - checkout
-      # - run:
-      #     name: Enable experimental features of DockerDeamon
-      #     command: |
-      #       set -x
-      #       echo 'DOCKER_OPTS="--experimental=true"' | sudo tee -a /etc/default/docker
-      #       export DEBIAN_FRONTEND=noninteractive
-      #       sudo apt-get update && sudo apt-get install -y docker-ce jq
-      #       sudo service docker restart
-      # - run:
-      #     name: Install Docker Compose
-      #     command: |
-      #       curl -L https://github.com/docker/compose/releases/download/1.19.0/docker-compose-`uname -s`-`uname -m` > ~/docker-compose
-      #       chmod +x ~/docker-compose
-      #       sudo mv ~/docker-compose /usr/local/bin/docker-compose
-      # - run:
-      #     name: install dockerize
-      #     command: |
-      #       wget https://github.com/jwilder/dockerize/releases/download/$DOCKERIZE_VERSION/dockerize-linux-amd64-$DOCKERIZE_VERSION.tar.gz && tar -C ~/bin -xzvf dockerize-linux-amd64-$DOCKERIZE_VERSION.tar.gz && rm dockerize-linux-amd64-$DOCKERIZE_VERSION.tar.gz
-      #     environment:
-      #       DOCKERIZE_VERSION: v0.6.1
-      # - run: docker-compose build
-      # - run: docker-compose up -d
-      # - run: sleep 30
-      # - run: curl -sk "https://127.0.0.1:8443/?urls=0&max=10"
+      - run:
+          name: Enable experimental features of DockerDeamon
+          command: |
+            set -x
+            echo 'DOCKER_OPTS="--experimental=true"' | sudo tee -a /etc/default/docker
+            export DEBIAN_FRONTEND=noninteractive
+            sudo apt-get update && sudo apt-get install -y docker-ce jq
+            sudo service docker restart
+      - run:
+          name: Install Docker Compose
+          command: |
+            curl -L https://github.com/docker/compose/releases/download/1.19.0/docker-compose-`uname -s`-`uname -m` > ~/docker-compose
+            chmod +x ~/docker-compose
+            sudo mv ~/docker-compose /usr/local/bin/docker-compose
+      - run:
+          name: install dockerize
+          command: |
+            wget https://github.com/jwilder/dockerize/releases/download/$DOCKERIZE_VERSION/dockerize-linux-amd64-$DOCKERIZE_VERSION.tar.gz && tar -C ~/bin -xzvf dockerize-linux-amd64-$DOCKERIZE_VERSION.tar.gz && rm dockerize-linux-amd64-$DOCKERIZE_VERSION.tar.gz
+          environment:
+            DOCKERIZE_VERSION: v0.6.1
+      - run: docker-compose build
+      - run: docker-compose up -d
+      - run: sleep 30
+      - run: curl -sk "https://127.0.0.1:8443/?urls=0&max=10"
   release:
     docker:
       - image: circleci/golang:latest

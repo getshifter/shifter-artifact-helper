@@ -1,0 +1,2 @@
+/mnt/dump true www-data 0664 0775
+/var/www/html/web/wp true www-data 0664 0775

@@ -1,0 +1,8 @@
+*.*
+**/**
+.*/**
+!cont-init.d/**
+!fix-attrs.d/**
+!scripts/**
+!volume/app/**
+!volume/dump/**
