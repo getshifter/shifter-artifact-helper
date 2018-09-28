@@ -38,7 +38,7 @@ class TestRootPath < Test::Unit::TestCase
     'amphtml' => [count_by(items, 'link_type', 'amphtml'), 38],
   )
 
-  def test_counts_0(data)
+  def test_root_path_first(data)
     expected, actual = data
     assert_equal(expected, actual)
   end
@@ -53,7 +53,7 @@ class TestRootPath < Test::Unit::TestCase
     'finished' => [items['finished'], true],
   )
 
-  def test_counts_4(data)
+  def test_root_path_end(data)
     expected, actual = data
     assert_equal(expected, actual)
   end
@@ -71,7 +71,7 @@ class TestRedirectLimit < Test::Unit::TestCase
     'redirection' => [count_by(items, 'link_type', 'redirection'), 10],
   )
 
-  def test_redirection_counts_0(data)
+  def test_redirection_counts_pre_end(data)
     expected, actual = data
     assert_equal(expected, actual)
   end
@@ -86,7 +86,58 @@ class TestRedirectLimit < Test::Unit::TestCase
     'redirection' => [count_by(items, 'link_type', 'redirection'), 3],
   )
 
-  def test_redirection_counts_1(data)
+  def test_redirection_counts_end(data)
+    expected, actual = data
+    assert_equal(expected, actual)
+  end
+end
+
+
+class TestCategoryPagenates < Test::Unit::TestCase
+  description 'Category pagenation'
+  items = get_urls(path: '/category/markup/')
+
+  data(
+    'all_counts' => [items['count'], 2],
+    'finished' => [items['finished'], true],
+    'paginate_link' => [count_by(items, 'link_type', 'paginate_link'), 2],
+  )
+
+  def test_category_case1(data)
+    expected, actual = data
+    assert_equal(expected, actual)
+  end
+end
+
+
+class TestArchivePagenates < Test::Unit::TestCase
+  description 'Archive pagenation'
+  items = get_urls(path: '/2010/')
+
+  data(
+    'all_counts' => [items['count'], 7],
+    'finished' => [items['finished'], true],
+    'paginate_link' => [count_by(items, 'link_type', 'paginate_link'), 7],
+  )
+
+  def test_archive_case1(data)
+    expected, actual = data
+    assert_equal(expected, actual)
+  end
+end
+
+
+class TestPostHasNextPage < Test::Unit::TestCase
+  description 'has Nextpage'
+  items = get_urls(path: '/2012/01/template-paginated/')
+
+  data(
+    'all_counts' => [items['count'], 2],
+    'finished' => [items['finished'], true],
+    'paginate_link' => [count_by(items, 'link_type', 'paginate_link'), 2],
+  )
+
+  def test_nexpage_case1(data)
     expected, actual = data
     assert_equal(expected, actual)
   end
