@@ -9,6 +9,10 @@ Author URI: https://getshifter.io
 License: GPLv2 or later
 */
 
+function shifter_add_settings_menu(){
+    add_submenu_page( 'shifter', 'Shifter Settings', 'Settings', 'administrator', 'shifter-settings', 'shifter_settings_page' );
+}
+
 // remove /index.php/ from Permalink
 add_filter('got_rewrite', '__return_true');
 
@@ -152,11 +156,6 @@ add_action( 'template_redirect', function() {
     remove_action( 'wp_head', 'wp_oembed_add_host_js' );
 }, 1);
 
-function shifter_add_settings_menu(){
-    add_menu_page( 'Shifter Settings', 'Shifter Settings', 'administrator', __FILE__, 'shifter_settings_page' , '/wp-content/mu-plugins/shifter-support-plugin/dist/images/shifter-icon.png' );
-    add_action( 'admin_init', 'shifter_register_settings' );
-}
-
 function shifter_register_settings(){
     register_setting( 'shifter-options', 'shifter_skip_attachment' );
     register_setting( 'shifter-options', 'shifter_skip_yearly' );
@@ -178,11 +177,13 @@ function shifter_settings_page(){
         "shifter_skip_feed"       => "feeds",
     );
 ?>
+
+<div class="card">
 <div class="wrap">
-<h1>Shifter Settings</h1>
+<h1>Shifter Generator Settings</h1>
 
 <form method="post" action="options.php">
-    <p>Shifter generating process to skip over pages.</p>
+    <p>Skip content you may not need and speed up the generating process. Selecting these options will exlucde them from your static Artifact.</p>
     <?php settings_fields( 'shifter-options' ); ?>
     <?php do_settings_sections( 'shifter-options' ); ?>
     <table class="form-table">
@@ -191,7 +192,7 @@ function shifter_settings_page(){
         <th scope="row"><?php echo ucfirst($title); ?></th>
         <td>
             <input type="checkbox" name="<?php echo esc_attr($key); ?>" id="<?php echo esc_attr($key); ?>" value="yes" <?php echo get_option($key) === 'yes' ? 'checked ' : '' ; ?>/>
-            <label for="<?php echo esc_attr($key); ?>">Shifter generating process to skip <?php echo $title; ?>.</label>
+            <label for="<?php echo esc_attr($key); ?>">Skip <?php echo $title; ?></label>
         </td>
         </tr>
 <?php } ?>
@@ -200,6 +201,7 @@ function shifter_settings_page(){
     <?php submit_button(); ?>
 
 </form>
+</div>
 </div>
 <?php
 }
