@@ -178,9 +178,13 @@ function shifter_settings_page(){
     );
 ?>
 
-<div class="card">
+
 <div class="wrap">
-<h1>Shifter Generator Settings</h1>
+
+<h1>Shifter</h1>
+
+<div class="card">
+<h2>Generator Settings</h2>
 
 <form method="post" action="options.php">
     <p>Skip content you may not need and speed up the generating process. Selecting these options will exlucde them from your static Artifact.</p>
