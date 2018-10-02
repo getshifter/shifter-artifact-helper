@@ -11,6 +11,7 @@ License: GPLv2 or later
 
 function shifter_add_settings_menu(){
     add_submenu_page( 'shifter', 'Shifter Settings', 'Settings', 'administrator', 'shifter-settings', 'shifter_settings_page' );
+    add_action( 'admin_init', 'shifter_register_settings' );
 }
 
 // remove /index.php/ from Permalink
