@@ -53,7 +53,8 @@ jobs:
               ghr -v
               ghr -replace ${CIRCLE_TAG} pkg/
             else
-              tar -cvzf pkg/shifter-artifact-helper.${CIRCLE_BRANCH}.tgz -T files
+              # create basename archive
+              tar -cvzf pkg/shifter-artifact-helper.${CIRCLE_BRANCH##*/}.tgz -T files
               echo skipped
             fi
       - store_artifacts:
