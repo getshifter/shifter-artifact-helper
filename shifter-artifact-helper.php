@@ -10,84 +10,14 @@ License: GPLv2 or later
 */
 
 // Shifter URLs
-require_once __DIR__ . '/include/class-shifter-urls.php';
-function shifter_init_urls($request_path=null, $rest_request=false)
-{
-    static $shifter_urls;
-
-    if (!$shifter_urls) {
-        $shifter_urls = ShifterUrls::get_instance();
-
-        $page  = $shifter_urls->get_page(0);
-        $limit = $shifter_urls->get_limit(100);
-        $start = $page * $limit;
-
-        $shifter_urls->set_url_count(0);
-        $shifter_urls->set_transient_expires(300);
-        $shifter_urls->set_start($start);
-        $shifter_urls->set_end($start + $limit);
-        if ($rest_request) {
-            $shifter_urls->set_request_uri(home_url($request_path));
-        }
-    }
-
-    return $shifter_urls;
-}
-function shifter_get_urls($request_path, $rest_request=false)
-{
-    if ($rest_request && '/'.ShifterUrls::PATH_404_HTML !== $request_path) {
-        $request_path = trailingslashit($request_path);
-    }
-    $shifter_urls = shifter_init_urls($request_path, $rest_request);
-
-    $json_data = [];
-    switch ($shifter_urls->current_url_type($request_path, $rest_request)) {
-    case ShifterUrls::URL_TOP:
-        $json_data = $shifter_urls->get_urls_all();
-        break;
-    case ShifterUrls::URL_ARCHIVE:
-        $json_data = $shifter_urls->get_urls_archive();
-        break;
-    case ShifterUrls::URL_SINGULAR:
-        $json_data = $shifter_urls->get_urls_singular();
-        break;
-    case ShifterUrls::URL_404:
-        $json_data = $shifter_urls->get_urls_404();
-        break;
-    default:
-        $json_data = $shifter_urls->get_urls();
-    }
-    unset($shifter_urls);
-
-    // For debug
-    if ($json_data['count'] > 0) {
-        error_log('');
-        foreach ($json_data['items'] as $item) {
-            error_log(json_encode($item));
-        }
-    }
-
-    return $json_data;
-}
+require_once __DIR__.'/include/class-shifter-urls.php';
 
 // Shifter URLs v1
 add_action(
     'template_redirect',
     function () {
-        $shifter_urls = shifter_init_urls();
-        $request_uri  = $shifter_urls->get_request_uri();
         if (!isset($_GET['urls'])) {
-            if (preg_match('#/'.preg_quote(ShifterUrls::PATH_404_HTML).'/?$#i', $request_uri)) {
-                header("HTTP/1.1 404 Not Found");
-                $overridden_template = locate_template('404.php');
-                if (!file_exists($overridden_template)) {
-                    $overridden_template = locate_template('index.php');
-                }
-                load_template($overridden_template);
-                die();
-            } else {
-                return;
-            }
+            return;
         }
 
         $json_data = shifter_get_urls(
@@ -113,7 +43,7 @@ add_action(
             ShifterUrls::REST_PATH,
             [
                 'methods'  => WP_REST_Server::READABLE,
-                'callback' => 'shifter_urls'
+                'callback' => 'shifter_urls_for_rest_api'
             ]
         );
         register_rest_route(
@@ -121,13 +51,13 @@ add_action(
             ShifterUrls::REST_PATH.'/(?P<path>.+)',
             [
                 'methods'  => WP_REST_Server::READABLE,
-                'callback' => 'shifter_urls'
+                'callback' => 'shifter_urls_for_rest_api'
             ]
         );
     }
 );
 
-function shifter_urls($data=[])
+function shifter_urls_for_rest_api($data=[])
 {
     if (!defined('SHIFTER_REST_REQUEST')) {
         define('SHIFTER_REST_REQUEST', true);
@@ -149,6 +79,30 @@ function shifter_urls($data=[])
 
 // remove /index.php/ from Permalink
 add_filter('got_rewrite', '__return_true');
+
+// shifter_404.html
+add_action(
+    'template_redirect',
+    function () {
+        if (!isset($_GET['urls'])) {
+            $request_uri  = ShifterUrls::link_nomalize(
+                isset($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : ''
+            );
+            if (preg_match('#^/'.preg_quote(ShifterUrls::PATH_404_HTML).'/?$#i', $request_uri)) {
+                header("HTTP/1.1 404 Not Found");
+                $overridden_template = locate_template('404.php');
+                if (!file_exists($overridden_template)) {
+                    $overridden_template = locate_template('index.php');
+                }
+                load_template($overridden_template);
+                die();
+            } else {
+                return;
+            }
+        }
+    },
+    1
+);
 
 // relative path
 add_action(

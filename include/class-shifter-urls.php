@@ -1,11 +1,63 @@
 <?php
+if (!defined('SHIFTER_URLS_CACHE_EXPIRES')) {
+    define('SHIFTER_URLS_CACHE_EXPIRES', 300);
+}
+
+function shifter_get_urls($request_path, $rest_request=false)
+{
+    if ($rest_request && '/'.ShifterUrls::PATH_404_HTML !== $request_path) {
+        $request_path = trailingslashit($request_path);
+    }
+    $shifter_urls = ShifterUrls::get_instance();
+
+    $page  = $shifter_urls->get_page(0);
+    $limit = $shifter_urls->get_limit(100);
+    $start = $page * $limit;
+
+    $shifter_urls->set_url_count(0);
+    $shifter_urls->set_transient_expires(intval(SHIFTER_URLS_CACHE_EXPIRES));
+    $shifter_urls->set_start($start);
+    $shifter_urls->set_end($start + $limit);
+    if ($rest_request) {
+        $shifter_urls->set_request_uri(home_url($request_path));
+    }
+
+    $json_data = [];
+    switch ($shifter_urls->current_url_type($request_path, $rest_request)) {
+    case ShifterUrls::URL_TOP:
+        $json_data = $shifter_urls->get_urls_all();
+        break;
+    case ShifterUrls::URL_ARCHIVE:
+        $json_data = $shifter_urls->get_urls_archive();
+        break;
+    case ShifterUrls::URL_SINGULAR:
+        $json_data = $shifter_urls->get_urls_singular();
+        break;
+    case ShifterUrls::URL_404:
+        $json_data = $shifter_urls->get_urls_404();
+        break;
+    default:
+        $json_data = $shifter_urls->get_urls();
+    }
+    unset($shifter_urls);
+
+    // For debug
+    if ($json_data['count'] > 0) {
+        error_log('');
+        foreach ($json_data['items'] as $item) {
+            error_log(json_encode($item));
+        }
+    }
+
+    return $json_data;
+}
 
 class ShifterUrls {
     private $var = [
         'start' => 0,
-        'end'   => 100,
+        'end'   => 0,
         'url_count' => 0,
-        'transient_expires' => 300,
+        'transient_expires' => SHIFTER_URLS_CACHE_EXPIRES,
     ];
 
     static $instance;
@@ -388,7 +440,7 @@ class ShifterUrls {
         set_transient($transient_key, $value, $this->get('transient_expires'));
     }
 
-    private function _link_nomalize($link)
+    static public function link_nomalize($link)
     {
         $link = remove_query_arg(
             ['urls','max','page','limit'],
@@ -402,6 +454,11 @@ class ShifterUrls {
             );
         }
         return $link;
+    }
+
+    private function _link_nomalize($link)
+    {
+        return self::link_nomalize($link);
     }
 
     private function _add_urls(&$urls=array(), $new_urls=array(), $link_type='', $post_type='', $redirect_action=null, $redirect_code=null){
@@ -444,7 +501,7 @@ class ShifterUrls {
         return self::NOT_FINAL;
     }
 
-    public function top_page_urls(&$urls = array())
+    private function top_page_urls(&$urls = array())
     {
         if (self::FINAL === $this->_urls_init($urls)) {
             return self::FINAL;
@@ -480,7 +537,7 @@ class ShifterUrls {
     }
 
     // post_type parmalink
-    public function posts_urls(&$urls = array())
+    private function posts_urls(&$urls = array())
     {
         global $wpdb;
 
@@ -585,7 +642,7 @@ class ShifterUrls {
     }
 
     // post_type archive link
-    public function post_type_archive_urls(&$urls = array())
+    private function post_type_archive_urls(&$urls = array())
     {
         global $wpdb;
 
@@ -697,7 +754,7 @@ class ShifterUrls {
     }
 
     // post_type term link
-    public function post_type_term_urls(&$urls = array())
+    private function post_type_term_urls(&$urls = array())
     {
         if (self::FINAL === $this->_urls_init($urls)) {
             return self::FINAL;
@@ -771,7 +828,7 @@ class ShifterUrls {
     }
 
     // archive link
-    public function archive_urls(&$urls = array())
+    private function archive_urls(&$urls = array())
     {
         if (self::FINAL === $this->_urls_init($urls)) {
             return $this->_check_final() ? self::FINAL : self::NOT_FINAL;
@@ -821,7 +878,7 @@ class ShifterUrls {
     }
 
     // pagenate link
-    public function pagenate_urls(&$urls = array(), $request_uri='/')
+    private function pagenate_urls(&$urls = array(), $request_uri='/')
     {
         if (self::FINAL === $this->_urls_init($urls)) {
             return self::FINAL;
@@ -860,7 +917,7 @@ class ShifterUrls {
     }
 
     // authors link
-    public function authors_urls(&$urls = array())
+    private function authors_urls(&$urls = array())
     {
         if (self::FINAL === $this->_urls_init($urls)) {
             return self::FINAL;
@@ -893,7 +950,7 @@ class ShifterUrls {
     }
 
     // redirection link
-    public function redirection_urls(&$urls = array())
+    private function redirection_urls(&$urls = array())
     {
         if (self::FINAL === $this->_urls_init($urls)) {
             return self::FINAL;
@@ -955,7 +1012,7 @@ class ShifterUrls {
         return $this->_check_final() ? self::FINAL : self::NOT_FINAL;
     }
 
-    public function singlepage_pagenate_urls(&$urls = array(), $request_path='/') {
+    private function singlepage_pagenate_urls(&$urls = array(), $request_path='/') {
         if (self::FINAL === $this->_urls_init($urls)) {
             return self::FINAL;
         }
