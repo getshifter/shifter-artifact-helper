@@ -2,8 +2,6 @@
 
 class ShifterUrls {
     private $var = [
-        'page'  => 0,
-        'limit' => 100,
         'start' => 0,
         'end'   => 100,
         'url_count' => 0,
@@ -11,8 +9,19 @@ class ShifterUrls {
     ];
 
     static $instance;
+
     const FINAL = 1;
     const NOT_FINAL = 0;
+
+    const PATH_404_HTML = 'shifter_404.html';
+
+    const REST_ENDPOINT = 'shifter/v1';
+    const REST_PATH     = '/urls';
+
+    const URL_TOP = 'TOP';
+    const URL_404 = '404';
+    const URL_ARCHIVE = 'ARCHIVE';
+    const URL_SINGULAR = 'SINGULAR';
 
     private function __construct()
     {
@@ -58,9 +67,36 @@ class ShifterUrls {
         } else {
             $value = $default;
             switch ($key) {
+            case 'page':
+                if (isset($_GET['urls']) && is_numeric($_GET['urls'])) {
+                    $value  = intval($_GET['urls']);
+                } else if (isset($_GET['page']) && is_numeric($_GET['page'])) {
+                    $value  = intval($_GET['page']) - 1;
+                }
+                break;
+            case 'limit':
+                if (isset($_GET['max']) && is_numeric($_GET['max'])) {
+                    $value = intval($_GET['max']);
+                } else if (isset($_GET['limit']) && is_numeric($_GET['limit'])) {
+                    $value = intval($_GET['limit']);
+                }
+                break;
             case 'request_uri':
-                $value = esc_html(
-                    $this->_link_nomalize(isset($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : '')
+                $value = isset($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : '';
+                if (defined('SHIFTER_REST_REQUEST') && SHIFTER_REST_REQUEST) {
+                    $value = str_replace(
+                        trailingslashit('/'.self::REST_ENDPOINT.self::REST_PATH),
+                        '/',
+                        $value
+                    );
+                }
+                $value = esc_html($this->_link_nomalize($value));
+                break;
+            case 'request_path':
+                $value = preg_replace(
+                    '#^https?://[^/]+/#',
+                    '/',
+                    $this->get('request_uri')
                 );
                 break;
             case 'home_url':
@@ -71,6 +107,23 @@ class ShifterUrls {
                 break;
             case 'urls':
                 $value = $this->_default_urls_array();
+                $this->set_url_count(isset($value['items']) ? count($value['items']) : 0);
+                break;
+            case 'urls_all':
+                $value = $this->_get_urls_all();
+                $this->set_url_count(isset($value['items']) ? count($value['items']) : 0);
+                break;
+            case 'urls_404':
+                $value = $this->_get_urls_404();
+                $this->set_url_count(isset($value['items']) ? count($value['items']) : 0);
+                break;
+            case 'urls_archive':
+                $value = $this->_get_urls_archive();
+                $this->set_url_count(isset($value['items']) ? count($value['items']) : 0);
+                break;
+            case 'urls_singular':
+                $value = $this->_get_urls_singular();
+                $this->set_url_count(isset($value['items']) ? count($value['items']) : 0);
                 break;
             case 'pages_per_page':
                 $value = intval(get_option('posts_per_page'));
@@ -79,10 +132,20 @@ class ShifterUrls {
                 $value = get_post_types(['public' => true], 'names');
                 break;
             case 'feed_types':
-                $value = ['rdf_url', 'rss_url', 'rss2_url', 'atom_url', 'comments_rss2_url'];
+                $value = [
+                    'rdf_url',
+                    'rss_url',
+                    'rss2_url',
+                    'atom_url',
+                    'comments_rss2_url'
+                ];
                 break;
             case 'archive_types':
-                $value = ['yearly','monthly','daily'];
+                $value = [
+                    'yearly',
+                    'monthly',
+                    'daily'
+                ];
                 break;
             default:
                 $value = $default;
@@ -109,6 +172,106 @@ class ShifterUrls {
             $this->var[$key] = $inc;
         }
         return $this->var[$key];
+    }
+
+    public function get_postid_from_url($request_path)
+    {
+        $request_path  = preg_replace(
+            '#^https?://[^/]+/#',
+            '/',
+            $request_path
+        );
+        $key = __METHOD__."-{$request_path}";
+        if (false === ($post_id = $this->_get_transient($key))) {
+            $post_id = url_to_postid(home_url($request_path));
+            $this->_set_transient($key, $post_id);
+        }
+        return $post_id;
+    }
+
+    public function current_url_type($request_path=null, $rest_request=false)
+    {
+        if (!$request_path) {
+            $request_path  = $this->get_request_path();
+        }
+        $current_url_type = self::URL_404;
+        if (!$rest_request) {
+            if (preg_match('#/'.preg_quote(self::PATH_404_HTML).'/?$#i', $request_path) || is_404()) {
+                $current_url_type = self::URL_404;
+            } else if (is_front_page() && '/' === $request_path) {
+                $current_url_type = self::URL_TOP;
+            } else if (is_singular()) {
+                $current_url_type = self::URL_SINGULAR;
+            } else {
+                $current_url_type = self::URL_ARCHIVE;
+            }
+        } else {
+            if (preg_match('#/'.preg_quote(self::PATH_404_HTML).'/?$#i', $request_path)) {
+                $current_url_type = self::URL_404;
+            } else if ('/' === $request_path) {
+                $current_url_type = self::URL_TOP;
+            } else if ($this->get_postid_from_url($request_path)) {
+                $current_url_type = self::URL_SINGULAR;
+            } else {
+                $current_url_type = self::URL_ARCHIVE;
+            }
+        }
+        return $current_url_type;
+    }
+
+    private function _get_urls_all()
+    {
+        $urls = $this->_default_urls_array();
+        query_posts('');
+        $this->top_page_urls($urls);            // top page & feed links
+        $this->posts_urls($urls);               // posts links
+        $this->post_type_archive_urls($urls);   // archive links
+        $this->post_type_term_urls($urls);      // term links
+        $this->archive_urls($urls);             // date archives
+        $this->pagenate_urls($urls);            // pagenate links
+        $this->authors_urls($urls);             // authors link
+        $this->redirection_urls($urls);         // redirection link
+        wp_reset_query();
+        $urls['request_type'] = self::URL_TOP;
+        $urls['request_path'] = $this->get_request_path();
+        $urls['count'] = count($urls['items']);
+        $urls['finished'] = $urls['count'] < $this->get_limit();
+        return $urls;
+    }
+
+    private function _get_urls_404()
+    {
+        $urls = $this->_default_urls_array();
+        $urls['items'] = [];
+        $urls['request_type'] = self::URL_404;
+        $urls['request_path'] = $this->get_request_path();
+        $urls['count'] = count($urls['items']);
+        $urls['finished'] = $urls['count'] < $this->get_limit();
+        return $urls;
+    }
+
+    private function _get_urls_archive()
+    {
+        $request_uri  = $this->get_request_uri();
+        $urls = $this->_default_urls_array();
+        $this->pagenate_urls($urls, $request_uri);  // pagenate links
+        $urls['request_type'] = self::URL_ARCHIVE;
+        $urls['request_path'] = $this->get_request_path();
+        $urls['count'] = count($urls['items']);
+        $urls['finished'] = $urls['count'] < $this->get_limit();
+        return $urls;
+    }
+
+    private function _get_urls_singular()
+    {
+        $request_uri  = $this->get_request_uri();
+        $urls = $this->_default_urls_array();
+        $this->singlepage_pagenate_urls($urls, $request_uri);   // single page links
+        $urls['request_type'] = self::URL_SINGULAR;
+        $urls['request_path'] = $this->get_request_path();
+        $urls['count'] = count($urls['items']);
+        $urls['finished'] = $urls['count'] < $this->get_limit();
+        return $urls;
     }
 
     private function _get_paginates($base_url, $total_posts)
@@ -139,12 +302,16 @@ class ShifterUrls {
     private function _default_urls_array()
     {
         return [
-            'datetime' => date('Y-m-d H:i:s T'),
-            'page'     => $this->get('page'),
-            'start'    => $this->get('start'),
-            'end'      => $this->get('end'),
-            'limit'    => $this->get('limit'),
-            'items'    => [],
+            'datetime'     => date('Y-m-d H:i:s T'),
+            'page'         => $this->get('page'),
+            'start'        => $this->get('start'),
+            'end'          => $this->get('end'),
+            'limit'        => $this->get('limit'),
+            'items'        => [],
+            'request_type' => '',
+            'request_path' => '/',
+            'count'        => 0,
+            'finished'     => false,
         ];
     }
 
@@ -198,6 +365,7 @@ class ShifterUrls {
             'link_type' => $link_type,
             'post_type' => $post_type,
             'link'      => $link,
+            'path'      => preg_replace('#^https?://[^/]+/#', '/', $link),
         ];
         if ($redirect_action) {
             $item['redirect_to'] = $redirect_action;
@@ -222,10 +390,18 @@ class ShifterUrls {
 
     private function _link_nomalize($link)
     {
-        return remove_query_arg(
-            ['urls','max'],
+        $link = remove_query_arg(
+            ['urls','max','page','limit'],
             str_replace('&#038;', '&', $link)
         );
+        if (defined('SHIFTER_REST_REQUEST') && SHIFTER_REST_REQUEST) {
+            $link = str_replace(
+                trailingslashit('/wp-json/'.self::REST_ENDPOINT.self::REST_PATH),
+                '/',
+                $link
+            );
+        }
+        return $link;
     }
 
     private function _add_urls(&$urls=array(), $new_urls=array(), $link_type='', $post_type='', $redirect_action=null, $redirect_code=null){
@@ -234,6 +410,9 @@ class ShifterUrls {
         }
 
         foreach ((array)$new_urls as $new_url) {
+            if (preg_match('#^/#', $new_url)) {
+                $new_url = home_url($new_url);
+            }
             if ('home' == $link_type || '404' == $link_type || $this->_check_link_format($new_url)) {
                 if ($this->_check_range()) {
                     $urls['items'][] = $this->_urls_item(
@@ -275,7 +454,7 @@ class ShifterUrls {
         $home_url = $this->get('home_url');
         $home_urls = [
             'home' => $home_url,
-            '404'  => $home_url.'shifter_404.html',
+            '404'  => $home_url.self::PATH_404_HTML,
         ];
         foreach ($home_urls as $url_type => $url) {
             if (self::FINAL === $this->_add_urls($urls, (array)$url, (string)$url_type, '')) {
@@ -367,8 +546,10 @@ class ShifterUrls {
                     $this->_set_transient($key, $pg_matches);
                 }
 
-                if (self::FINAL === $this->_add_urls($urls, (array)$pg_matches, 'paginate_link', $post_type)) {
-                    break;
+                if (!empty($pg_matches)) {
+                    if (self::FINAL === $this->_add_urls($urls, (array)$pg_matches, 'paginate_link', $post_type)) {
+                        break;
+                    }
                 }
                 unset($pg_matches);
 
@@ -657,17 +838,9 @@ class ShifterUrls {
 
         $key = __METHOD__."-{$request_uri}";
         if (false === ($paginate_links = $this->_get_transient($key))) {
-            global $wp_query;
-            $big = 999999999;
-            $args = [
-                'base'    => str_replace($big, '%#%', esc_url(get_pagenum_link($big))),
-                'format'  => 'page/%#%/',
-                'current' => $current_page,
-                'total'   => $wp_query->max_num_pages,
-            ];
             preg_match_all(
                 '/class=["\']page-numbers["\'][\s]+href=["\']([^"\']*)["\']/',
-                paginate_links(['show_all'=>true]),
+                paginate_links(['show_all'=> true]),
                 $matches,
                 PREG_SET_ORDER
             );
@@ -764,19 +937,13 @@ class ShifterUrls {
                 $redirect_action = '/'.$redirect_action;
             }
 
-            $redirect_code   = (int)$redirection->get_action_code();
+            $redirect_code = (int)$redirection->get_action_code();
             if ($redirect_code < 300 || $redirect_code > 400) {
                 continue;
             }
 
             if ($this->_check_range()) {
-                $urls['items'][] = $this->_urls_item(
-                    'redirection',
-                    '',
-                    $redirection_link,
-                    $redirect_action,
-                    $redirect_code
-                );
+                $this->_add_urls($urls, (array)$redirection_link, 'redirection', '', $redirect_action, $redirect_code);
             }
             if ($this->_check_final()) {
                 break;
@@ -788,48 +955,68 @@ class ShifterUrls {
         return $this->_check_final() ? self::FINAL : self::NOT_FINAL;
     }
 
-    public function singlepage_pagenate_urls(&$urls = array(), $request_uri='/') {
+    public function singlepage_pagenate_urls(&$urls = array(), $request_path='/') {
         if (self::FINAL === $this->_urls_init($urls)) {
             return self::FINAL;
         }
 
-        $request_uri = preg_replace('#https?://[^/]+/#', '/', $request_uri);
-        if (preg_match('#/page/[0-9]+/$#', $request_uri)) {
+        $request_path = preg_replace('#https?://[^/]+/#', '/', $request_path);
+        if (preg_match('#/page/[0-9]+/$#', $request_path)) {
             return $this->_check_final() ? self::FINAL : self::NOT_FINAL;
         }
 
-        while (have_posts()) {
-            the_post();
+        global $post;
+        $post_id = $this->get_postid_from_url($request_path);
+        $post = get_post($post_id);
+        setup_postdata($post);
 
-            // pagenate links
-            $current_page = max(1, get_query_var('page'));
-            $paginate_links = wp_link_pages(['echo' => false]);
-            if (preg_match_all('/href=["\']([^"\']*)["\']/', $paginate_links, $matches, PREG_SET_ORDER)) {
-                $pagenate_count = 0;
-                foreach ($matches as $match) {
-                    $paginate_link = $this->_link_nomalize($match[1]);
-                    $page_number = max(1, intval(preg_replace('#^.*/([0-9]+)/$#', '$1', $paginate_link)));
-                    if (!$this->_check_link_format($paginate_link)) {
-                        continue;
-                    }
-
-                    if ($this->_check_range()) {
-                        $post_type = get_post_type();
-                        $urls['items'][] = $this->_urls_item(
-                            'paginate_link',
-                            $post_type ? $post_type : '',
-                            $paginate_link
-                        );
-                    }
-                    if ($this->_check_final()) {
-                        break;
-                    }
-                    $pagenate_count++;
-                    $this->increment('url_count');
-                }
-            }
-            unset($matches);
+        $permalink = get_permalink($post_id);
+        $permalink_path = preg_replace('#https?://[^/]+/#', '/', $permalink);
+        $current_page = 1;
+        if ($permalink_path !== $request_path) {
+            $current_page = max(
+                1,
+                intval(preg_replace('#^.*?/(\d+)/?$#', '$1', $request_path))
+            );
         }
+        if ($current_page > 1) {
+            return self::FINAL;
+        }
+
+        // pagenate links
+        $paginate_links = wp_link_pages(['echo' => false]);
+        if (preg_match_all('/href=["\']([^"\']*)["\']/', $paginate_links, $matches, PREG_SET_ORDER)) {
+            foreach ($matches as $match) {
+                $paginate_link = $this->_link_nomalize($match[1]);
+                $page_number = 1;
+                if ($permalink !== $paginate_link) {
+                    $page_number = max(
+                        1,
+                        intval(preg_replace('#^.*?/(\d+)/?$#', '$1', $paginate_link))
+                    );
+                }
+                if ($page_number === 1) {
+                    continue;
+                }
+                if (!$this->_check_link_format($paginate_link)) {
+                    continue;
+                }
+
+                if ($this->_check_range()) {
+                    $post_type = get_post_type();
+                    $urls['items'][] = $this->_urls_item(
+                        'paginate_link',
+                        $post_type ? $post_type : '',
+                        $paginate_link
+                    );
+                }
+                if ($this->_check_final()) {
+                    break;
+                }
+                $this->increment('url_count');
+            }
+        }
+        unset($matches);
 
         $this->set('urls', $urls);
         return $this->_check_final() ? self::FINAL : self::NOT_FINAL;

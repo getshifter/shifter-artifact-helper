@@ -3,26 +3,81 @@
 Plugin Name: Shifter – Artifact Helper
 Plugin URI: https://github.com/getshifter/shifter-artifact-helper
 Description: Helper tool for building Shifter Artifacts
-Version: 0.11.3
+Version: 1.0.0
 Author: Shifter Team
 Author URI: https://getshifter.io
 License: GPLv2 or later
 */
 
-// remove /index.php/ from Permalink
-add_filter('got_rewrite', '__return_true');
-
+// Shifter URLs
 require_once __DIR__ . '/include/class-shifter-urls.php';
+function shifter_init_urls($request_path=null, $rest_request=false)
+{
+    static $shifter_urls;
+
+    if (!$shifter_urls) {
+        $shifter_urls = ShifterUrls::get_instance();
+
+        $page  = $shifter_urls->get_page(0);
+        $limit = $shifter_urls->get_limit(100);
+        $start = $page * $limit;
+
+        $shifter_urls->set_url_count(0);
+        $shifter_urls->set_transient_expires(300);
+        $shifter_urls->set_start($start);
+        $shifter_urls->set_end($start + $limit);
+        if ($rest_request) {
+            $shifter_urls->set_request_uri(home_url($request_path));
+        }
+    }
+
+    return $shifter_urls;
+}
+function shifter_get_urls($request_path, $rest_request=false)
+{
+    if ($rest_request && '/'.ShifterUrls::PATH_404_HTML !== $request_path) {
+        $request_path = trailingslashit($request_path);
+    }
+    $shifter_urls = shifter_init_urls($request_path, $rest_request);
+
+    $json_data = [];
+    switch ($shifter_urls->current_url_type($request_path, $rest_request)) {
+    case ShifterUrls::URL_TOP:
+        $json_data = $shifter_urls->get_urls_all();
+        break;
+    case ShifterUrls::URL_ARCHIVE:
+        $json_data = $shifter_urls->get_urls_archive();
+        break;
+    case ShifterUrls::URL_SINGULAR:
+        $json_data = $shifter_urls->get_urls_singular();
+        break;
+    case ShifterUrls::URL_404:
+        $json_data = $shifter_urls->get_urls_404();
+        break;
+    default:
+        $json_data = $shifter_urls->get_urls();
+    }
+    unset($shifter_urls);
+
+    // For debug
+    if ($json_data['count'] > 0) {
+        error_log('');
+        foreach ($json_data['items'] as $item) {
+            error_log(json_encode($item));
+        }
+    }
+
+    return $json_data;
+}
+
+// Shifter URLs v1
 add_action(
     'template_redirect',
     function () {
-        $shifter_urls = ShifterUrls::get_instance();
-        $home_url     = $shifter_urls->get_home_url();
+        $shifter_urls = shifter_init_urls();
         $request_uri  = $shifter_urls->get_request_uri();
-        $request_path = preg_replace('#^https?://[^/]+/#', '/', $request_uri);
-
         if (!isset($_GET['urls'])) {
-            if (preg_match('#/shifter_404\.html/?$#i', $request_uri)) {
+            if (preg_match('#/'.preg_quote(ShifterUrls::PATH_404_HTML).'/?$#i', $request_uri)) {
                 header("HTTP/1.1 404 Not Found");
                 $overridden_template = locate_template('404.php');
                 if (!file_exists($overridden_template)) {
@@ -35,97 +90,67 @@ add_action(
             }
         }
 
-        $shifter_urls->set_url_count(0);
-        $shifter_urls->set_transient_expires(300);
-
-        $shifter_urls->set_page(
-            is_numeric($_GET['urls'])
-            ? intval($_GET['urls'])
-            : 0
+        $json_data = shifter_get_urls(
+            preg_replace('#^https?://[^/]+/#', '/', $request_uri),
+            false
         );
-        $shifter_urls->set_limit(
-            (isset($_GET['max']) && is_numeric($_GET['max']))
-            ? intval($_GET['max'])
-            : 100
-        );
-        $shifter_urls->set_start($shifter_urls->get_page() * $shifter_urls->get_limit());
-        $shifter_urls->set_end($shifter_urls->get_start() + $shifter_urls->get_limit());
 
-        $urls = $shifter_urls->get_urls();
-
-        header('Content-Type: application/json');
-
-        if (preg_match('#/shifter_404\.html/?$#i', $request_uri)) {
-            $urls['items'] = [];
-            $shifter_urls->set_url_count(0);
-            $shifter_urls->set_urls($urls);
-
-        } else if (is_front_page() && $request_path === '/') {
-            // top page & feed links
-            $shifter_urls->top_page_urls($urls);
-
-            // posts links
-            $shifter_urls->posts_urls($urls);
-
-            // archive links
-            $shifter_urls->post_type_archive_urls($urls);
-
-            // term links
-            $shifter_urls->post_type_term_urls($urls);
-
-            // date archives
-            $shifter_urls->archive_urls($urls);
-
-            // pagenate links
-            $shifter_urls->pagenate_urls($urls);
-
-            // authors link
-            $shifter_urls->authors_urls($urls);
-
-            // redirection link (redirection plugin)
-            $shifter_urls->redirection_urls($urls);
-
-        } else if (!is_singular()) {
-            // pagenate links
-            $shifter_urls->pagenate_urls($urls, $request_uri);
-
-        } else {
-            // single page links
-            $shifter_urls->singlepage_pagenate_urls($urls, $request_uri);
-        }
-
-        $urls['count'] = count($urls['items']);
-        $urls['finished'] = $urls['count'] < $shifter_urls->get_limit();
-        if ($urls['count'] <= 0) {
+        if ($json_data['count'] <= 0) {
             header("HTTP/1.1 404 Not Found");
-        } else {
-            error_log('');
-            foreach ($urls['items'] as $item) {
-                error_log(json_encode($item));
-            }
         }
-
-        echo json_encode($urls);
+        header('Content-Type: application/json');
+        echo json_encode($json_data);
         die();
     }
 );
 
-function shifter_add_settings_menu()
+// Shifter URLs v2 (WP JSON REST API)
+add_action(
+    'rest_api_init',
+    function () {
+        register_rest_route(
+            ShifterUrls::REST_ENDPOINT,
+            ShifterUrls::REST_PATH,
+            [
+                'methods'  => WP_REST_Server::READABLE,
+                'callback' => 'shifter_urls'
+            ]
+        );
+        register_rest_route(
+            ShifterUrls::REST_ENDPOINT,
+            ShifterUrls::REST_PATH.'/(?P<path>.+)',
+            [
+                'methods'  => WP_REST_Server::READABLE,
+                'callback' => 'shifter_urls'
+            ]
+        );
+    }
+);
+
+function shifter_urls($data=[])
 {
-    add_submenu_page(
-        'shifter',
-        'Shifter Settings',
-        'Settings',
-        'administrator',
-        'shifter-settings',
-        'shifter_settings_page'
+    if (!defined('SHIFTER_REST_REQUEST')) {
+        define('SHIFTER_REST_REQUEST', true);
+    }
+
+    $json_data = shifter_get_urls(
+        '/' . (isset($data['path']) && !empty($data['path']) ? $data['path'] : ''),
+        true
     );
-    add_action(
-        'admin_init',
-        'shifter_register_settings'
-    );
+    $json_data['page']++;
+
+    $response = new WP_REST_Response($json_data);
+    $response->set_status(200);
+
+    return $response;
 }
 
+// Shifter customize
+
+// remove /index.php/ from Permalink
+add_filter('got_rewrite', '__return_true');
+
+// relative path
 add_action(
     'init',
     function () {
@@ -133,7 +158,7 @@ add_action(
         add_filter(
             'upload_dir',
             function ($uploads) {
-                $parsed_url  = parse_url( home_url() );
+                $parsed_url  = parse_url(home_url());
                 $host_name   = $parsed_url['host'];
                 $server_name = $host_name . (isset($parsed_url['port']) ? ':'.$parsed_url['port'] : '');
                 if (isset($uploads['url'])) {
@@ -153,14 +178,10 @@ add_action(
         };
         add_filter('the_editor_content', $shifter_content_filter);
         add_filter('the_content', $shifter_content_filter);
-
-        // add menu
-        if (is_admin()) {
-            add_action('admin_menu', 'shifter_add_settings_menu');
-        }
     }
 );
 
+// remove meta tags
 add_action(
     'template_redirect',
     function () {
@@ -183,6 +204,33 @@ add_action(
     },
     1
 );
+
+// Option page
+add_action(
+    'init',
+    function () {
+        // add menu
+        if (is_admin()) {
+            add_action('admin_menu', 'shifter_add_settings_menu');
+        }
+    }
+);
+
+function shifter_add_settings_menu()
+{
+    add_submenu_page(
+        'shifter',
+        'Shifter Settings',
+        'Settings',
+        'administrator',
+        'shifter-settings',
+        'shifter_settings_page'
+    );
+    add_action(
+        'admin_init',
+        'shifter_register_settings'
+    );
+}
 
 function shifter_register_settings()
 {
