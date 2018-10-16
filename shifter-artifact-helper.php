@@ -12,7 +12,9 @@ License: GPLv2 or later
 // Shifter URLs
 require_once __DIR__.'/include/class-shifter-urls.php';
 
-// Shifter URLs v1
+/**
+ * Shifter URLs v1
+ */
 add_action(
     'template_redirect',
     function () {
@@ -34,7 +36,9 @@ add_action(
     }
 );
 
-// Shifter URLs v2 (WP JSON REST API)
+/**
+ * Shifter URLs v2 (WP JSON REST API)
+ */
 add_action(
     'rest_api_init',
     function () {
@@ -57,6 +61,13 @@ add_action(
     }
 );
 
+/**
+ * Callback function for WP JSON REST API
+ *
+ * @param array $data
+ * 
+ * @return object
+ */
 function shifter_urls_for_rest_api($data=[])
 {
     if (!defined('SHIFTER_REST_REQUEST')) {
@@ -77,10 +88,14 @@ function shifter_urls_for_rest_api($data=[])
 
 // Shifter customize
 
-// remove /index.php/ from Permalink
+/**
+ * Remove /index.php/ from Permalink
+ */
 add_filter('got_rewrite', '__return_true');
 
-// shifter_404.html
+/**
+ * Create shifter_404.html
+ */
 add_action(
     'template_redirect',
     function () {
@@ -104,7 +119,9 @@ add_action(
     1
 );
 
-// relative path
+/**
+ * Relative path
+ */
 add_action(
     'init',
     function () {
@@ -135,7 +152,9 @@ add_action(
     }
 );
 
-// remove meta tags
+/**
+ * Remove meta tags
+ */
 add_action(
     'template_redirect',
     function () {
@@ -159,7 +178,9 @@ add_action(
     1
 );
 
-// Option page
+/**
+ * Option page
+ */
 add_action(
     'init',
     function () {
@@ -170,6 +191,11 @@ add_action(
     }
 );
 
+/**
+ * Callback function for admin menu
+ *
+ * @return nothing
+ */
 function shifter_add_settings_menu()
 {
     add_submenu_page(
@@ -186,6 +212,11 @@ function shifter_add_settings_menu()
     );
 }
 
+/**
+ * Callback function for option values
+ *
+ * @return nothing
+ */
 function shifter_register_settings()
 {
     register_setting('shifter-options', 'shifter_skip_attachment');
@@ -197,6 +228,11 @@ function shifter_register_settings()
     register_setting('shifter-options', 'shifter_skip_feed');
 }
 
+/**
+ * Callback function for setting box
+ *
+ * @return nothing
+ */
 function shifter_settings_page()
 {
     $options = [
