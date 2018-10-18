@@ -23,6 +23,14 @@ $ docker-compose up
 
 open `https://127.0.0.1:8443`
 
+run test for containers which is launched by `docker-compose up`.
+
+```
+$ cd integration_test
+$ bundle install
+$ bundle exec ruby ./entry.rb
+```
+
 ### update contents for wp
 
 ```
