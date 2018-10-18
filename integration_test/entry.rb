@@ -206,6 +206,7 @@ end
 class TestCategoryPagenates < Test::Unit::TestCase
   description 'Category pagenation'
   items = get_urls(path: '/category/markup/')
+  rest_items = get_urls_wprest(path: '/category/markup/')
 
   data(
     'all_counts' => [items['count'], 2],
@@ -217,12 +218,25 @@ class TestCategoryPagenates < Test::Unit::TestCase
     expected, actual = data
     assert_equal(expected, actual)
   end
+
+  # for rest-api
+  data(
+    'all_counts' => [rest_items['count'], 2],
+    'finished' => [rest_items['finished'], true],
+    'paginate_link' => [count_by(rest_items, 'link_type', 'paginate_link'), 2],
+  )
+
+  def test_rest_category_case1(data)
+    expected, actual = data
+    assert_equal(expected, actual)
+  end
 end
 
 
 class TestArchivePagenates < Test::Unit::TestCase
   description 'Archive pagenation'
   items = get_urls(path: '/2010/')
+  rest_items = get_urls_wprest(path: '/2010/')
 
   data(
     'all_counts' => [items['count'], 7],
@@ -234,12 +248,24 @@ class TestArchivePagenates < Test::Unit::TestCase
     expected, actual = data
     assert_equal(expected, actual)
   end
+
+  data(
+    'all_counts' => [rest_items['count'], 7],
+    'finished' => [rest_items['finished'], true],
+    'paginate_link' => [count_by(rest_items, 'link_type', 'paginate_link'), 7],
+  )
+
+  def test_rest_archive_case1(data)
+    expected, actual = data
+    assert_equal(expected, actual)
+  end
 end
 
 
 class TestPostHasNextPage < Test::Unit::TestCase
   description 'has Nextpage'
   items = get_urls(path: '/2012/01/template-paginated/')
+  rest_items = get_urls_wprest(path: '/2012/01/template-paginated/')
 
   data(
     'all_counts' => [items['count'], 2],
@@ -248,6 +274,17 @@ class TestPostHasNextPage < Test::Unit::TestCase
   )
 
   def test_nexpage_case1(data)
+    expected, actual = data
+    assert_equal(expected, actual)
+  end
+
+  data(
+    'all_counts' => [rest_items['count'], 2],
+    'finished' => [rest_items['finished'], true],
+    'paginate_link' => [count_by(rest_items, 'link_type', 'paginate_link'), 2],
+  )
+
+  def test_rest_nexpage_case1(data)
     expected, actual = data
     assert_equal(expected, actual)
   end
