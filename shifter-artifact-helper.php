@@ -22,10 +22,12 @@ add_action(
             return;
         }
 
-        $json_data = shifter_get_urls(
-            preg_replace('#^https?://[^/]+/#', '/', $request_uri),
-            false
+        $request_path = preg_replace(
+            '#^https?://[^/]+/#',
+            '/',
+            isset($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : home_url('/')
         );
+        $json_data = shifter_get_urls($request_path, false);
 
         if ($json_data['count'] <= 0) {
             header("HTTP/1.1 404 Not Found");
@@ -74,10 +76,8 @@ function shifter_urls_for_rest_api($data=[])
         define('SHIFTER_REST_REQUEST', true);
     }
 
-    $json_data = shifter_get_urls(
-        '/' . (isset($data['path']) && !empty($data['path']) ? $data['path'] : ''),
-        true
-    );
+    $request_path = '/' . (isset($data['path']) && !empty($data['path']) ? $data['path'] : '');
+    $json_data = shifter_get_urls($request_path, true);
     $json_data['page']++;
 
     $response = new WP_REST_Response($json_data);
