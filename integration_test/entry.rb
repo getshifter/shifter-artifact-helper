@@ -148,6 +148,7 @@ class TestRedirectLimit < Test::Unit::TestCase
   # Limit case: redirection only items
   description '/?urls=41&max=10'
   items = get_urls(path: '/', urls: 41, max: 10)
+  rest_items = get_urls_wprest(path: '/', page: 42, limit: 10)
 
   data(
     'all_counts' => [items['count'], 10],
@@ -160,9 +161,22 @@ class TestRedirectLimit < Test::Unit::TestCase
     assert_equal(expected, actual)
   end
 
+  # for rest-api
+  data(
+    'all_counts' => [rest_items['count'], 10],
+    'finished' => [rest_items['finished'], false],
+    'redirection' => [count_by(rest_items, 'link_type', 'redirection'), 10],
+  )
+
+  def test_rest_redirection_counts_pre_end(data)
+    expected, actual = data
+    assert_equal(expected, actual)
+  end
+
   # Limit case: redirection only items
   description '/?urls=42&max=10'
   items = get_urls(path: '/', urls: 42, max: 10)
+  rest_items = get_urls_wprest(path: '/', page: 43, limit: 10)
 
   data(
     'all_counts' => [items['count'], 3],
@@ -171,6 +185,18 @@ class TestRedirectLimit < Test::Unit::TestCase
   )
 
   def test_redirection_counts_end(data)
+    expected, actual = data
+    assert_equal(expected, actual)
+  end
+
+  # for rest-api
+  data(
+    'all_counts' => [rest_items['count'], 3],
+    'finished' => [rest_items['finished'], true],
+    'redirection' => [count_by(rest_items, 'link_type', 'redirection'), 3],
+  )
+
+  def test_rest_redirection_counts_end(data)
     expected, actual = data
     assert_equal(expected, actual)
   end
