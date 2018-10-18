@@ -1,5 +1,5 @@
 list:
-	find . -name "*.php" > files
+	find . -type d -name integration_test -prune -o -type f -name '*.php' -print > files
 
 pkg: clean
 	tar -cvzf shifter-artifact-helper.tgz -T files
