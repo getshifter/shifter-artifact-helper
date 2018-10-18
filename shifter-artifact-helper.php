@@ -22,12 +22,7 @@ add_action(
             return;
         }
 
-        $request_path = preg_replace(
-            '#^https?://[^/]+/#',
-            '/',
-            isset($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : home_url('/')
-        );
-        $json_data = shifter_get_urls($request_path, false);
+        $json_data = shifter_get_urls();
 
         if ($json_data['count'] <= 0) {
             header("HTTP/1.1 404 Not Found");

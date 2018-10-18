@@ -11,7 +11,7 @@ if (!defined('SHIFTER_URLS_CACHE_EXPIRES')) {
  * 
  * @return array|string
  */
-function shifter_get_urls($request_path, $rest_request=false)
+function shifter_get_urls($request_path=null, $rest_request=false)
 {
     if ($rest_request && '/'.ShifterUrls::PATH_404_HTML !== $request_path) {
         $request_path = trailingslashit($request_path);
