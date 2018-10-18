@@ -42,6 +42,7 @@ class TestRootPath < Test::Unit::TestCase
     'home' => [count_by(items, 'link_type', 'home'), 1],
     '404' => [count_by(items, 'link_type', '404'), 1],
     'feed' => [count_by(items, 'link_type', 'feed'), 5],
+    'request_type' => [items['request_type'], 'TOP'],
   )
 
   def test_root_path_first(data)
@@ -59,6 +60,7 @@ class TestRootPath < Test::Unit::TestCase
     'home' => [count_by(items, 'link_type', 'home'), 1],
     '404' => [count_by(items, 'link_type', '404'), 1],
     'feed' => [count_by(items, 'link_type', 'feed'), 5],
+    'request_type' => [items['request_type'], 'TOP'],
   )
 
   def test_rest_root_path_first(data)
@@ -211,6 +213,7 @@ class TestCategoryPagenates < Test::Unit::TestCase
     'all_counts' => [items['count'], 2],
     'finished' => [items['finished'], true],
     'paginate_link' => [count_by(items, 'link_type', 'paginate_link'), 2],
+    'request_type' => [items['request_type'], 'ARCHIVE'],
   )
 
   def test_category_case1(data)
@@ -224,6 +227,7 @@ class TestCategoryPagenates < Test::Unit::TestCase
     'all_counts' => [items['count'], 2],
     'finished' => [items['finished'], true],
     'paginate_link' => [count_by(items, 'link_type', 'paginate_link'), 2],
+    'request_type' => [items['request_type'], 'ARCHIVE'],
   )
 
   def test_rest_category_case1(data)
@@ -241,6 +245,7 @@ class TestArchivePagenates < Test::Unit::TestCase
     'all_counts' => [items['count'], 7],
     'finished' => [items['finished'], true],
     'paginate_link' => [count_by(items, 'link_type', 'paginate_link'), 7],
+    'request_type' => [items['request_type'], 'ARCHIVE'],
   )
 
   def test_archive_case1(data)
@@ -254,6 +259,7 @@ class TestArchivePagenates < Test::Unit::TestCase
     'all_counts' => [items['count'], 7],
     'finished' => [items['finished'], true],
     'paginate_link' => [count_by(items, 'link_type', 'paginate_link'), 7],
+    'request_type' => [items['request_type'], 'ARCHIVE'],
   )
 
   def test_rest_archive_case1(data)
@@ -271,6 +277,7 @@ class TestPostHasNextPage < Test::Unit::TestCase
     'all_counts' => [items['count'], 2],
     'finished' => [items['finished'], true],
     'paginate_link' => [count_by(items, 'link_type', 'paginate_link'), 2],
+    'request_type' => [items['request_type'], 'SINGULAR'],
   )
 
   def test_nexpage_case1(data)
@@ -284,6 +291,7 @@ class TestPostHasNextPage < Test::Unit::TestCase
     'all_counts' => [items['count'], 2],
     'finished' => [items['finished'], true],
     'paginate_link' => [count_by(items, 'link_type', 'paginate_link'), 2],
+    'request_type' => [items['request_type'], 'SINGULAR'],
   )
 
   def test_rest_nexpage_case1(data)
