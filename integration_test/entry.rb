@@ -10,7 +10,15 @@ REMOTE_SERVER='https://127.0.0.1:8443'
 
 def get_urls(path:, urls: 0, max: 100)
   res = open(
-    "https://127.0.0.1:8443#{path}?urls=#{urls}&max=#{max}",
+    "#{REMOTE_SERVER}#{path}?urls=#{urls}&max=#{max}",
+    :ssl_verify_mode => OpenSSL::SSL::VERIFY_NONE
+  ).read
+  return JSON.load(res)
+end
+
+def get_urls_wprest(path:, page: 1, limit: 100)
+  res = open(
+    "#{REMOTE_SERVER}/wp-json/shifter/v1/urls/#{path}?page=#{page}&limit=#{limit}",
     :ssl_verify_mode => OpenSSL::SSL::VERIFY_NONE
   ).read
   return JSON.load(res)
@@ -23,8 +31,9 @@ end
 
 
 class TestRootPath < Test::Unit::TestCase
-  description '/?urls=0&max=100'
+  description '/?urls=0&max=100 and ?page=1&limit=100'
   items = get_urls(path: '/')
+  rest_items = get_urls_wprest(path: '/')
 
   data(
     'all_counts' => [items['count'], 100],
@@ -41,8 +50,26 @@ class TestRootPath < Test::Unit::TestCase
     assert_equal(expected, actual)
   end
 
-  description '/?urls=4&max=100'
+  # for rest-api
+  data(
+    'all_counts' => [rest_items['count'], 100],
+    'start' => [rest_items['start'], 0],
+    'end' => [rest_items['end'], 100],
+    'finished' => [rest_items['finished'], false],
+    'home' => [count_by(rest_items, 'link_type', 'home'), 1],
+    '404' => [count_by(rest_items, 'link_type', '404'), 1],
+    'feed' => [count_by(rest_items, 'link_type', 'feed'), 5],
+  )
+
+  def test_rest_root_path_first(data)
+    expected, actual = data
+    assert_equal(expected, actual)
+  end
+
+
+  description '/?urls=4&max=100 and ?page=5&limit=100'
   items = get_urls(path: '/', urls: 4)
+  rest_items = get_urls_wprest(path: '/', page: 5)
 
   data(
     'all_counts' => [items['count'], 23],
@@ -56,8 +83,23 @@ class TestRootPath < Test::Unit::TestCase
     assert_equal(expected, actual)
   end
 
-  description '/?urls=0&max=500'
+  # for rest-api
+  data(
+    'all_counts' => [rest_items['count'], 23],
+    'start' => [rest_items['start'], 400],
+    'end' => [rest_items['end'], 500],
+    'finished' => [rest_items['finished'], true],
+  )
+
+  def test_rest_root_path_end(data)
+    expected, actual = data
+    assert_equal(expected, actual)
+  end
+
+
+  description 'alldata: /?urls=0&max=500 and ?page=1&limit=500'
   items = get_urls(path: '/', urls: 0, max: 500)
+  rest_items = get_urls_wprest(path: '/', page: 1, limit: 500)
 
   data(
     'all_counts' => [items['count'], 423],
@@ -75,6 +117,27 @@ class TestRootPath < Test::Unit::TestCase
   )
 
   def test_root_path_all(data)
+    expected, actual = data
+    assert_equal(expected, actual)
+  end
+
+  # for rest-api
+  data(
+    'all_counts' => [rest_items['count'], 423],
+    'start' => [rest_items['start'], 0],
+    'end' => [rest_items['end'], 500],
+    'finished' => [rest_items['finished'], true],
+    'home' => [count_by(rest_items, 'link_type', 'home'), 1],
+    '404' => [count_by(rest_items, 'link_type', '404'), 1],
+    'feed' => [count_by(rest_items, 'link_type', 'feed'), 5],
+    'permalink' => [count_by(rest_items, 'link_type', 'permalink'), 58],
+    'amphtml' => [count_by(rest_items, 'link_type', 'amphtml'), 38],
+    'term_link' => [count_by(rest_items, 'link_type', 'term_link'), 199],
+    'archive_link' => [count_by(rest_items, 'link_type', 'archive_link'), 86],
+    'redirection' => [count_by(rest_items, 'link_type', 'redirection'), 13],
+  )
+
+  def test_rest_root_path_all(data)
     expected, actual = data
     assert_equal(expected, actual)
   end
