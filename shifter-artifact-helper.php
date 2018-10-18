@@ -100,7 +100,7 @@ add_action(
     'template_redirect',
     function () {
         if (!isset($_GET['urls'])) {
-            $request_uri  = ShifterUrls::link_nomalize(
+            $request_uri  = ShifterUrls::link_normalize(
                 isset($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : ''
             );
             if (preg_match('#^/'.preg_quote(ShifterUrls::PATH_404_HTML).'/?$#i', $request_uri)) {
