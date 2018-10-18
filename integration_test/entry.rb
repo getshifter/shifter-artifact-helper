@@ -34,8 +34,6 @@ class TestRootPath < Test::Unit::TestCase
     'home' => [count_by(items, 'link_type', 'home'), 1],
     '404' => [count_by(items, 'link_type', '404'), 1],
     'feed' => [count_by(items, 'link_type', 'feed'), 5],
-    'permalink' => [count_by(items, 'link_type', 'permalink'), 52],
-    'amphtml' => [count_by(items, 'link_type', 'amphtml'), 38],
   )
 
   def test_root_path_first(data)
@@ -54,6 +52,29 @@ class TestRootPath < Test::Unit::TestCase
   )
 
   def test_root_path_end(data)
+    expected, actual = data
+    assert_equal(expected, actual)
+  end
+
+  description '/?urls=0&max=500'
+  items = get_urls(path: '/', urls: 0, max: 500)
+
+  data(
+    'all_counts' => [items['count'], 423],
+    'start' => [items['start'], 0],
+    'end' => [items['end'], 500],
+    'finished' => [items['finished'], true],
+    'home' => [count_by(items, 'link_type', 'home'), 1],
+    '404' => [count_by(items, 'link_type', '404'), 1],
+    'feed' => [count_by(items, 'link_type', 'feed'), 5],
+    'permalink' => [count_by(items, 'link_type', 'permalink'), 58],
+    'amphtml' => [count_by(items, 'link_type', 'amphtml'), 38],
+    'term_link' => [count_by(items, 'link_type', 'term_link'), 199],
+    'archive_link' => [count_by(items, 'link_type', 'archive_link'), 86],
+    'redirection' => [count_by(items, 'link_type', 'redirection'), 13],
+  )
+
+  def test_root_path_all(data)
     expected, actual = data
     assert_equal(expected, actual)
   end
