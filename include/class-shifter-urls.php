@@ -363,38 +363,49 @@ class ShifterUrls
     private function _get_urls_all()
     {
         $urls = $this->_default_urls_array();
+
+        // top page & feed links
         if (!$this->_check_skip('top')) {
-            $this->_top_page_urls($urls);            // top page & feed links
-        }
-        // Front pagenate links
-        if (!($this->_check_skip('top_pagenate') || $this->_check_skip('top'))) {
-            query_posts('');
-            if ('posts' === get_option('show_on_front')) {
-                $this->_pagenate_urls($urls);
-            } else {
-                $this->_pagenate_urls_page_on_front($urls);
-                $this->_pagenate_urls_page_for_posts($urls);
+            $this->_top_page_urls($urls);
+            // Front pagenate links
+            if (!$this->_check_skip('top_pagenate')) {
+                query_posts('');
+                if ('posts' === get_option('show_on_front')) {
+                    $this->_pagenate_urls($urls);
+                } else {
+                    $this->_pagenate_urls_page_on_front($urls);
+                    $this->_pagenate_urls_page_for_posts($urls);
+                }
+                wp_reset_query();
             }
-            wp_reset_query();
         }
+
+        // posts links
         if (!$this->_check_skip('singular')) {
-            $this->_posts_urls($urls);               // posts links
+            $this->_posts_urls($urls);
         }
-        if (!($this->_check_skip('post_archive') || $this->_check_skip('archive'))) {
-            $this->_post_type_archive_urls($urls);   // archive links
+
+        // archive links
+        if (!$this->_check_skip('archive')) {
+            if (!$this->_check_skip('post_archive')) {
+                $this->_post_type_archive_urls($urls);   // archive links
+            }
+            if (!$this->_check_skip('term_archive')) {
+                $this->_post_type_term_urls($urls);      // term links
+            }
+            if (!$this->_check_skip('date_archive')) {
+                $this->_archive_urls($urls);             // date archives
+            }
+            if (!$this->_check_skip('author_archive')) {
+                $this->_authors_urls($urls);             // authors link
+            }
         }
-        if (!($this->_check_skip('term_archive') || $this->_check_skip('archive'))) {
-            $this->_post_type_term_urls($urls);      // term links
-        }
-        if (!($this->_check_skip('date_archive') || $this->_check_skip('archive'))) {
-            $this->_archive_urls($urls);             // date archives
-        }
-        if (!$this->_check_skip('author')) {
-            $this->_authors_urls($urls);             // authors link
-        }
+
+        // redirection links
         if (!$this->_check_skip('redirection')) {
-            $this->_redirection_urls($urls);         // redirection link
+            $this->_redirection_urls($urls);
         }
+
         $urls['request_type'] = self::URL_TOP;
         $urls['request_path'] = $this->get_request_path();
         $urls['count'] = count($urls['items']);
