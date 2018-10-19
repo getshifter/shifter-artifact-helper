@@ -177,6 +177,12 @@ class ShifterUrls
                     $value = intval($_GET['limit']);
                 }
                 break;
+            case 'disables':
+                if (isset($_GET['disables'])) {
+                    $value = explode(',', $_GET['disables']);
+                }
+                $value = (array)$value;
+                break;
             case 'request_uri':
                 $value = isset($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : '';
                 if (defined('SHIFTER_REST_REQUEST') && SHIFTER_REST_REQUEST) {
@@ -199,7 +205,7 @@ class ShifterUrls
                 $value = trailingslashit(home_url('/'));
                 break;
             case 'current_url':
-                $value = home_url($this->get('request_uri'));
+                $value = home_url($this->get('request_path'));
                 break;
             case 'urls':
                 $value = $this->_default_urls_array();
@@ -244,7 +250,7 @@ class ShifterUrls
                 ];
                 break;
             default:
-                $value = $default;
+                $value = get_option($key);
             }
             if ($value) {
                 $this->set($key, $value);
@@ -357,22 +363,38 @@ class ShifterUrls
     private function _get_urls_all()
     {
         $urls = $this->_default_urls_array();
-        $this->_top_page_urls($urls);            // top page & feed links
-        // Front pagenate links
-        query_posts('');
-        if ('posts' === get_option('show_on_front')) {
-            $this->_pagenate_urls($urls);
-        } else {
-            $this->_pagenate_urls_page_on_front($urls);
-            $this->_pagenate_urls_page_for_posts($urls);
+        if (!$this->_check_skip('top')) {
+            $this->_top_page_urls($urls);            // top page & feed links
         }
-        wp_reset_query();
-        $this->_posts_urls($urls);               // posts links
-        $this->_post_type_archive_urls($urls);   // archive links
-        $this->_post_type_term_urls($urls);      // term links
-        $this->_archive_urls($urls);             // date archives
-        $this->_authors_urls($urls);             // authors link
-        $this->_redirection_urls($urls);         // redirection link
+        // Front pagenate links
+        if (!($this->_check_skip('top_pagenate') || $this->_check_skip('top'))) {
+            query_posts('');
+            if ('posts' === get_option('show_on_front')) {
+                $this->_pagenate_urls($urls);
+            } else {
+                $this->_pagenate_urls_page_on_front($urls);
+                $this->_pagenate_urls_page_for_posts($urls);
+            }
+            wp_reset_query();
+        }
+        if (!$this->_check_skip('singular')) {
+            $this->_posts_urls($urls);               // posts links
+        }
+        if (!($this->_check_skip('post_archive') || $this->_check_skip('archive'))) {
+            $this->_post_type_archive_urls($urls);   // archive links
+        }
+        if (!($this->_check_skip('term_archive') || $this->_check_skip('archive'))) {
+            $this->_post_type_term_urls($urls);      // term links
+        }
+        if (!($this->_check_skip('date_archive') || $this->_check_skip('archive'))) {
+            $this->_archive_urls($urls);             // date archives
+        }
+        if (!$this->_check_skip('author')) {
+            $this->_authors_urls($urls);             // authors link
+        }
+        if (!$this->_check_skip('redirection')) {
+            $this->_redirection_urls($urls);         // redirection link
+        }
         $urls['request_type'] = self::URL_TOP;
         $urls['request_path'] = $this->get_request_path();
         $urls['count'] = count($urls['items']);
@@ -541,7 +563,12 @@ class ShifterUrls
      */
     private function _check_skip($key)
     {
-        return (get_option('shifter_skip_'.$key) === 'yes');
+        $result = get_option('shifter_skip_'.$key) === 'yes';
+        $disables = $this->get('disables', []);
+        if (in_array($key, $disables)) {
+            $result = true;
+        }
+        return $result;
     }
 
     /**
@@ -646,7 +673,7 @@ class ShifterUrls
     static public function link_normalize($link)
     {
         $link = remove_query_arg(
-            ['urls','max','page','limit'],
+            ['urls','max','page','limit', 'disables'],
             str_replace('&#038;', '&', $link)
         );
         if (defined('SHIFTER_REST_REQUEST') && SHIFTER_REST_REQUEST) {
@@ -899,6 +926,9 @@ class ShifterUrls
 
                 // Detect Automattic AMP
                 if (function_exists('amp_get_permalink') && class_exists('AMP_Options_Manager')) {
+                    if ($this->_check_skip('amp')) {
+                        continue;
+                    }
                     // Force ignnore page.
                     if ($post_type !== 'page') {
                         // supported_post_types is empty until first saved the setting.
@@ -1465,6 +1495,9 @@ class ShifterUrls
             return self::FINAL;
         }
         if (!class_exists('Red_Item')) {
+            return $this->_check_final() ? self::FINAL : self::NOT_FINAL;
+        }
+        if ($this->_check_skip('redirection')) {
             return $this->_check_final() ? self::FINAL : self::NOT_FINAL;
         }
 
