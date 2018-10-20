@@ -31,7 +31,8 @@ function shifter_get_urls($request_path=null, $rest_request=false)
     }
 
     $json_data = [];
-    switch ($shifter_urls->current_url_type($request_path, $rest_request)) {
+    $current_url_type = $shifter_urls->current_url_type($request_path, $rest_request);
+    switch ($current_url_type) {
     case ShifterUrls::URL_TOP:
         $json_data = $shifter_urls->get_urls_all();
         break;
@@ -51,7 +52,7 @@ function shifter_get_urls($request_path=null, $rest_request=false)
 
     // For debug
     if ($json_data['count'] > 0) {
-        error_log('');
+        error_log("{$current_url_type}: {$request_path}");
         foreach ($json_data['items'] as $item) {
             error_log(json_encode($item));
         }
@@ -1331,20 +1332,28 @@ class ShifterUrls
      */
     private function _pagenate_urls_page_on_front(&$urls = array(), $request_uri='/')
     {
+        global $wpdb;
+
         if (self::FINAL === $this->_urls_init($urls)) {
             return self::FINAL;
         }
 
-        $post = get_post(get_option('page_on_front')); 
-        if (!$post) {
+        $post_id = intval(get_option('page_on_front'));
+        if (!$post_id) {
             return $this->_check_final() ? self::FINAL : self::NOT_FINAL;
         }
+        $sql =
+            "SELECT ID,post_type,post_content".
+            " FROM {$wpdb->posts}".
+            " WHERE ID=%d"
+            ;
+        $sql = $wpdb->prepare(
+            $sql,
+            $post_id
+        );
+        $post = $wpdb->get_results($sql);
 
-        $key = "posts_urls-{$post->post_type}-permalink-{$post->ID}";
-        if (false === ($permalink = $this->_get_transient($key))) {
-            $permalink = get_permalink($post_id);
-            $this->_set_transient($key, $permalink);
-        }
+        $permalink = get_permalink($post_id);
         $pagenate_format = '%#%/';
         if (trailingslashit($permalink) !== trailingslashit($this->get('home_url'))) {
             if (!$this->_check_link_format($permalink)) {
@@ -1367,8 +1376,7 @@ class ShifterUrls
         // has <!--nexpage--> ?
         $key = "posts_urls-{$post->post_type}-permalink-{$post->ID}-nextpages";
         if (false === ($pg_matches = $this->_get_transient($key))) {
-            $post_content = get_post_field('post_content', $post->ID, 'raw');
-            $pcount = mb_substr_count($post_content, '<!--nextpage-->');
+            $pcount = mb_substr_count($post->post_content, '<!--nextpage-->');
             $pagenate_links = paginate_links(
                 [
                     'base'     => "{$permalink}%_%",
@@ -1415,36 +1423,56 @@ class ShifterUrls
      */
     private function _pagenate_urls_page_for_posts(&$urls = array(), $request_uri='/')
     {
+        global $wpdb;
+
         if (self::FINAL === $this->_urls_init($urls)) {
             return self::FINAL;
         }
 
-        $post = get_post(get_option('page_for_posts')); 
-        if (!$post) {
-            return $this->_check_final() ? self::FINAL : self::NOT_FINAL;
-        }
+        $key = __METHOD__."-page_for_posts";
+        if (false === ($archives_lists = $this->_get_transient($key))) {
+            $archive_base = '/';
+            $post_id = intval(get_option('page_for_posts'));
+            if ($post_id) {
+                $sql =
+                    "SELECT ID,post_type".
+                    " FROM {$wpdb->posts}".
+                    " WHERE ID=%d"
+                    ;
+                $sql = $wpdb->prepare(
+                    $sql,
+                    $post_id
+                );
+                $post = $wpdb->get_results($sql);
+                $permalink = get_permalink($post_id);
+                $archive_base = preg_replace('#https?://[^/]+/#', '/', $permalink);
+            }
 
-        $key = "posts_urls-{$post->post_type}-permalink-{$post->ID}";
-        if (false === ($permalink = $this->_get_transient($key))) {
-            $permalink = get_permalink($post_id);
-            $this->_set_transient($key, $permalink);
-        }
-        if (!$this->_check_link_format($permalink)) {
-            return $this->_check_final() ? self::FINAL : self::NOT_FINAL;
+            $archives_lists = [$archive_base];
+            $sql =
+                "SELECT count(*)".
+                " FROM {$wpdb->posts}".
+                " WHERE post_type=%s AND post_status=%s"
+                ;
+            $sql = $wpdb->prepare(
+                $sql,
+                'post',
+                'publish'
+            );
+            $posts_count = $wpdb->get_var($sql);
+            $pagenate_urls = $this->_get_paginates($archive_base, $posts_count);
+            foreach ($pagenate_urls as $pagenate_url) {
+                $archives_lists[] = $pagenate_url;
+            }
+            $this->_set_transient($key, $archives_lists);
         }
         $added = $this->_add_urls(
             $urls,
-            (array)$permalink,
-            'permalink',
-            $post_type
+            (array)$archives_lists,
+            'paginate_link',
+            'post'
         );
-        if (self::FINAL === $added) {
-            $this->set('urls', $urls);
-            return $this->_check_final() ? self::FINAL : self::NOT_FINAL;
-        }
-
-        $request_uri = preg_replace('#https?://[^/]+/#', '/', $permalink);
-        $this->_pagenate_urls($urls, $request_uri);
+        unset($archives_lists);
 
         $this->set('urls', $urls);
         return $this->_check_final() ? self::FINAL : self::NOT_FINAL;
