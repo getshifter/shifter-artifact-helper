@@ -1431,27 +1431,23 @@ class ShifterUrls
 
         $key = __METHOD__."-page_for_posts";
         if (false === ($archives_lists = $this->_get_transient($key))) {
+            $archive_base = '/';
             $post_id = intval(get_option('page_for_posts'));
-            if (!$post_id) {
-                return $this->_check_final() ? self::FINAL : self::NOT_FINAL;
-            }
-            $sql =
-                "SELECT ID,post_type".
-                " FROM {$wpdb->posts}".
-                " WHERE ID=%d"
-                ;
-            $sql = $wpdb->prepare(
-                $sql,
-                $post_id
-            );
-            $post = $wpdb->get_results($sql);
-            $permalink = get_permalink($post_id);
-
-            if (!$this->_check_link_format($permalink)) {
-                return $this->_check_final() ? self::FINAL : self::NOT_FINAL;
+            if ($post_id) {
+                $sql =
+                    "SELECT ID,post_type".
+                    " FROM {$wpdb->posts}".
+                    " WHERE ID=%d"
+                    ;
+                $sql = $wpdb->prepare(
+                    $sql,
+                    $post_id
+                );
+                $post = $wpdb->get_results($sql);
+                $permalink = get_permalink($post_id);
+                $archive_base = preg_replace('#https?://[^/]+/#', '/', $permalink);
             }
 
-            $archive_base = preg_replace('#https?://[^/]+/#', '/', $permalink);
             $archives_lists = [$archive_base];
             $sql =
                 "SELECT count(*)".
@@ -1473,7 +1469,7 @@ class ShifterUrls
         $added = $this->_add_urls(
             $urls,
             (array)$archives_lists,
-            'archive_link',
+            'paginate_link',
             'post'
         );
         unset($archives_lists);
