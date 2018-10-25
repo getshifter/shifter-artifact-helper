@@ -299,3 +299,20 @@ class TestPostHasNextPage < Test::Unit::TestCase
     assert_equal(expected, actual)
   end
 end
+
+class TestUrlsWithBogo < Test::Unit::TestCase
+  description 'Paginate page only return paginate url.'
+  root_url = get_urls(path: '/', urls: 0)
+  en_url = get_urls(path: '/en/', urls: 0)
+
+  data(
+    'url_home': [count_by(root_url, 'link_type', 'home'), 1],
+    'url_en_home': [count_by(en_url, 'link_type', 'home'), 0],
+    'root_url' => [root_url['count'], 100],
+    'en_url' => [en_url['count'], 19],
+  )
+  def test_urls_count(data)
+    expected, actual = data
+    assert_equal(expected, actual)
+  end
+end

@@ -1,0 +1,773 @@
+msgid ""
+msgstr ""
+"PO-Revision-Date: 2018-10-25 15:11:45+0000\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"X-Generator: Bogo 3.2\n"
+"Language: nl_NL\n"
+"Project-Id-Version: WordPress 4.9.8\n"
+
+msgctxt "blogname"
+msgid "blogname"
+msgstr "urls"
+
+msgctxt "blogdescription"
+msgid "blogdescription"
+msgstr "Just another WordPress site"
+
+msgctxt "category"
+msgid "category:2"
+msgstr "aciform"
+
+msgctxt "category"
+msgid "category:3"
+msgstr "antiquarianism"
+
+msgctxt "category"
+msgid "category:4"
+msgstr "arrangement"
+
+msgctxt "category"
+msgid "category:5"
+msgstr "asmodeus"
+
+msgctxt "category"
+msgid "category:6"
+msgstr "Blogroll"
+
+msgctxt "category"
+msgid "category:7"
+msgstr "broder"
+
+msgctxt "category"
+msgid "category:8"
+msgstr "buying"
+
+msgctxt "category"
+msgid "category:9"
+msgstr "Cat A"
+
+msgctxt "category"
+msgid "category:10"
+msgstr "Cat B"
+
+msgctxt "category"
+msgid "category:11"
+msgstr "Cat C"
+
+msgctxt "category"
+msgid "category:12"
+msgstr "championship"
+
+msgctxt "category"
+msgid "category:13"
+msgstr "chastening"
+
+msgctxt "category"
+msgid "category:57"
+msgstr "Child 1"
+
+msgctxt "category"
+msgid "category:58"
+msgstr "Child 2"
+
+msgctxt "category"
+msgid "category:59"
+msgstr "Child Category 01"
+
+msgctxt "category"
+msgid "category:60"
+msgstr "Child Category 02"
+
+msgctxt "category"
+msgid "category:61"
+msgstr "Child Category 03"
+
+msgctxt "category"
+msgid "category:62"
+msgstr "Child Category 04"
+
+msgctxt "category"
+msgid "category:63"
+msgstr "Child Category 05"
+
+msgctxt "category"
+msgid "category:14"
+msgstr "clerkship"
+
+msgctxt "category"
+msgid "category:15"
+msgstr "disinclination"
+
+msgctxt "category"
+msgid "category:16"
+msgstr "disinfection"
+
+msgctxt "category"
+msgid "category:17"
+msgstr "dispatch"
+
+msgctxt "category"
+msgid "category:18"
+msgstr "echappee"
+
+msgctxt "category"
+msgid "category:19"
+msgstr "Edge Case"
+
+msgctxt "category"
+msgid "category:20"
+msgstr "enphagy"
+
+msgctxt "category"
+msgid "category:21"
+msgstr "equipollent"
+
+msgctxt "category"
+msgid "category:22"
+msgstr "fatuity"
+
+msgctxt "category"
+msgid "category:23"
+msgstr "Foo A"
+
+msgctxt "category"
+msgid "category:64"
+msgstr "Foo A"
+
+msgctxt "category"
+msgid "category:24"
+msgstr "Foo Parent"
+
+msgctxt "category"
+msgid "category:25"
+msgstr "gaberlunzie"
+
+msgctxt "category"
+msgid "category:65"
+msgstr "Grandchild Category"
+
+msgctxt "category"
+msgid "category:26"
+msgstr "illtempered"
+
+msgctxt "category"
+msgid "category:27"
+msgstr "insubordination"
+
+msgctxt "category"
+msgid "category:28"
+msgstr "lender"
+
+msgctxt "category"
+msgid "category:29"
+msgstr "Markup"
+
+msgctxt "category"
+msgid "category:30"
+msgstr "Media"
+
+msgctxt "category"
+msgid "category:31"
+msgstr "monosyllable"
+
+msgctxt "category"
+msgid "category:32"
+msgstr "packthread"
+
+msgctxt "category"
+msgid "category:33"
+msgstr "palter"
+
+msgctxt "category"
+msgid "category:34"
+msgstr "papilionaceous"
+
+msgctxt "category"
+msgid "category:35"
+msgstr "Parent"
+
+msgctxt "category"
+msgid "category:36"
+msgstr "Parent Category"
+
+msgctxt "category"
+msgid "category:37"
+msgstr "personable"
+
+msgctxt "category"
+msgid "category:38"
+msgstr "Post Formats"
+
+msgctxt "category"
+msgid "category:39"
+msgstr "propylaeum"
+
+msgctxt "category"
+msgid "category:40"
+msgstr "pustule"
+
+msgctxt "category"
+msgid "category:41"
+msgstr "quartern"
+
+msgctxt "category"
+msgid "category:42"
+msgstr "scholarship"
+
+msgctxt "category"
+msgid "category:43"
+msgstr "selfconvicted"
+
+msgctxt "category"
+msgid "category:44"
+msgstr "showshoe"
+
+msgctxt "category"
+msgid "category:45"
+msgstr "sloyd"
+
+msgctxt "category"
+msgid "category:46"
+msgstr "sub"
+
+msgctxt "category"
+msgid "category:47"
+msgstr "sublunary"
+
+msgctxt "category"
+msgid "category:48"
+msgstr "tamtam"
+
+msgctxt "category"
+msgid "category:49"
+msgstr "Template"
+
+msgctxt "category"
+msgid "category:1"
+msgstr "Uncategorized"
+
+msgctxt "category"
+msgid "category:50"
+msgstr "Unpublished"
+
+msgctxt "category"
+msgid "category:51"
+msgstr "weakhearted"
+
+msgctxt "category"
+msgid "category:52"
+msgstr "ween"
+
+msgctxt "category"
+msgid "category:53"
+msgstr "wellhead"
+
+msgctxt "category"
+msgid "category:54"
+msgstr "wellintentioned"
+
+msgctxt "category"
+msgid "category:55"
+msgstr "whetstone"
+
+msgctxt "category"
+msgid "category:56"
+msgstr "years"
+
+msgctxt "post_tag"
+msgid "post_tag:66"
+msgstr "8BIT"
+
+msgctxt "post_tag"
+msgid "post_tag:67"
+msgstr "alignment"
+
+msgctxt "post_tag"
+msgid "post_tag:68"
+msgstr "Articles"
+
+msgctxt "post_tag"
+msgid "post_tag:69"
+msgstr "aside"
+
+msgctxt "post_tag"
+msgid "post_tag:70"
+msgstr "audio"
+
+msgctxt "post_tag"
+msgid "post_tag:71"
+msgstr "captions"
+
+msgctxt "post_tag"
+msgid "post_tag:72"
+msgstr "categories"
+
+msgctxt "post_tag"
+msgid "post_tag:73"
+msgstr "chat"
+
+msgctxt "post_tag"
+msgid "post_tag:74"
+msgstr "chattels"
+
+msgctxt "post_tag"
+msgid "post_tag:75"
+msgstr "cienaga"
+
+msgctxt "post_tag"
+msgid "post_tag:76"
+msgstr "claycold"
+
+msgctxt "post_tag"
+msgid "post_tag:77"
+msgstr "Codex"
+
+msgctxt "post_tag"
+msgid "post_tag:78"
+msgstr "comments"
+
+msgctxt "post_tag"
+msgid "post_tag:79"
+msgstr "content"
+
+msgctxt "post_tag"
+msgid "post_tag:80"
+msgstr "crushing"
+
+msgctxt "post_tag"
+msgid "post_tag:81"
+msgstr "css"
+
+msgctxt "post_tag"
+msgid "post_tag:82"
+msgstr "depo"
+
+msgctxt "post_tag"
+msgid "post_tag:83"
+msgstr "dinarchy"
+
+msgctxt "post_tag"
+msgid "post_tag:84"
+msgstr "doolie"
+
+msgctxt "post_tag"
+msgid "post_tag:85"
+msgstr "dowork"
+
+msgctxt "post_tag"
+msgid "post_tag:86"
+msgstr "edge case"
+
+msgctxt "post_tag"
+msgid "post_tag:87"
+msgstr "embeds"
+
+msgctxt "post_tag"
+msgid "post_tag:88"
+msgstr "energumen"
+
+msgctxt "post_tag"
+msgid "post_tag:89"
+msgstr "ephialtes"
+
+msgctxt "post_tag"
+msgid "post_tag:90"
+msgstr "eudiometer"
+
+msgctxt "post_tag"
+msgid "post_tag:91"
+msgstr "excerpt"
+
+msgctxt "post_tag"
+msgid "post_tag:92"
+msgstr "Fail"
+
+msgctxt "post_tag"
+msgid "post_tag:93"
+msgstr "featured image"
+
+msgctxt "post_tag"
+msgid "post_tag:94"
+msgstr "figuriste"
+
+msgctxt "post_tag"
+msgid "post_tag:95"
+msgstr "filler"
+
+msgctxt "post_tag"
+msgid "post_tag:96"
+msgstr "formatting"
+
+msgctxt "post_tag"
+msgid "post_tag:97"
+msgstr "FTW"
+
+msgctxt "post_tag"
+msgid "post_tag:98"
+msgstr "Fun"
+
+msgctxt "post_tag"
+msgid "post_tag:99"
+msgstr "gallery"
+
+msgctxt "post_tag"
+msgid "post_tag:100"
+msgstr "goes here"
+
+msgctxt "post_tag"
+msgid "post_tag:101"
+msgstr "habergeon"
+
+msgctxt "post_tag"
+msgid "post_tag:102"
+msgstr "hapless"
+
+msgctxt "post_tag"
+msgid "post_tag:103"
+msgstr "hartshorn"
+
+msgctxt "post_tag"
+msgid "post_tag:104"
+msgstr "hostility impregnability"
+
+msgctxt "post_tag"
+msgid "post_tag:105"
+msgstr "html"
+
+msgctxt "post_tag"
+msgid "post_tag:106"
+msgstr "image"
+
+msgctxt "post_tag"
+msgid "post_tag:107"
+msgstr "impropriation"
+
+msgctxt "post_tag"
+msgid "post_tag:108"
+msgstr "is"
+
+msgctxt "post_tag"
+msgid "post_tag:109"
+msgstr "jetpack"
+
+msgctxt "post_tag"
+msgid "post_tag:110"
+msgstr "knave"
+
+msgctxt "post_tag"
+msgid "post_tag:111"
+msgstr "layout"
+
+msgctxt "post_tag"
+msgid "post_tag:112"
+msgstr "link"
+
+msgctxt "post_tag"
+msgid "post_tag:113"
+msgstr "lists"
+
+msgctxt "post_tag"
+msgid "post_tag:114"
+msgstr "lorem"
+
+msgctxt "post_tag"
+msgid "post_tag:115"
+msgstr "Love"
+
+msgctxt "post_tag"
+msgid "post_tag:116"
+msgstr "markup"
+
+msgctxt "post_tag"
+msgid "post_tag:117"
+msgstr "media"
+
+msgctxt "post_tag"
+msgid "post_tag:118"
+msgstr "misinformed"
+
+msgctxt "post_tag"
+msgid "post_tag:119"
+msgstr "moil"
+
+msgctxt "post_tag"
+msgid "post_tag:120"
+msgstr "more"
+
+msgctxt "post_tag"
+msgid "post_tag:121"
+msgstr "mornful"
+
+msgctxt "post_tag"
+msgid "post_tag:122"
+msgstr "Mothership"
+
+msgctxt "post_tag"
+msgid "post_tag:123"
+msgstr "Must Read"
+
+msgctxt "post_tag"
+msgid "post_tag:124"
+msgstr "Nailed It"
+
+msgctxt "post_tag"
+msgid "post_tag:125"
+msgstr "outlaw"
+
+msgctxt "post_tag"
+msgid "post_tag:126"
+msgstr "pagination"
+
+msgctxt "post_tag"
+msgid "post_tag:127"
+msgstr "pamphjlet"
+
+msgctxt "post_tag"
+msgid "post_tag:128"
+msgstr "password"
+
+msgctxt "post_tag"
+msgid "post_tag:129"
+msgstr "Pictures"
+
+msgctxt "post_tag"
+msgid "post_tag:130"
+msgstr "pingbacks"
+
+msgctxt "post_tag"
+msgid "post_tag:131"
+msgstr "pneumatics"
+
+msgctxt "post_tag"
+msgid "post_tag:132"
+msgstr "portly portreeve"
+
+msgctxt "post_tag"
+msgid "post_tag:133"
+msgstr "post"
+
+msgctxt "post_tag"
+msgid "post_tag:134"
+msgstr "Post Formats"
+
+msgctxt "post_tag"
+msgid "post_tag:135"
+msgstr "precipitancy"
+
+msgctxt "post_tag"
+msgid "post_tag:136"
+msgstr "privation"
+
+msgctxt "post_tag"
+msgid "post_tag:137"
+msgstr "programme"
+
+msgctxt "post_tag"
+msgid "post_tag:138"
+msgstr "psychological"
+
+msgctxt "post_tag"
+msgid "post_tag:139"
+msgstr "puncher"
+
+msgctxt "post_tag"
+msgid "post_tag:140"
+msgstr "quote"
+
+msgctxt "post_tag"
+msgid "post_tag:141"
+msgstr "ramose"
+
+msgctxt "post_tag"
+msgid "post_tag:142"
+msgstr "read more"
+
+msgctxt "post_tag"
+msgid "post_tag:143"
+msgstr "readability"
+
+msgctxt "post_tag"
+msgid "post_tag:144"
+msgstr "renegade"
+
+msgctxt "post_tag"
+msgid "post_tag:145"
+msgstr "retrocede"
+
+msgctxt "post_tag"
+msgid "post_tag:146"
+msgstr "shortcode"
+
+msgctxt "post_tag"
+msgid "post_tag:147"
+msgstr "stagnation unhorsed"
+
+msgctxt "post_tag"
+msgid "post_tag:148"
+msgstr "standard"
+
+msgctxt "post_tag"
+msgid "post_tag:149"
+msgstr "status"
+
+msgctxt "post_tag"
+msgid "post_tag:150"
+msgstr "sticky"
+
+msgctxt "post_tag"
+msgid "post_tag:151"
+msgstr "Success"
+
+msgctxt "post_tag"
+msgid "post_tag:152"
+msgstr "Swagger"
+
+msgctxt "post_tag"
+msgid "post_tag:153"
+msgstr "Tag A"
+
+msgctxt "post_tag"
+msgid "post_tag:154"
+msgstr "Tag B"
+
+msgctxt "post_tag"
+msgid "post_tag:155"
+msgstr "Tag C"
+
+msgctxt "post_tag"
+msgid "post_tag:156"
+msgstr "tag1"
+
+msgctxt "post_tag"
+msgid "post_tag:157"
+msgstr "tag2"
+
+msgctxt "post_tag"
+msgid "post_tag:158"
+msgstr "tag3"
+
+msgctxt "post_tag"
+msgid "post_tag:159"
+msgstr "Tags"
+
+msgctxt "post_tag"
+msgid "post_tag:160"
+msgstr "template"
+
+msgctxt "post_tag"
+msgid "post_tag:161"
+msgstr "text"
+
+msgctxt "post_tag"
+msgid "post_tag:162"
+msgstr "the man"
+
+msgctxt "post_tag"
+msgid "post_tag:163"
+msgstr "thunderheaded"
+
+msgctxt "post_tag"
+msgid "post_tag:164"
+msgstr "tiled"
+
+msgctxt "post_tag"
+msgid "post_tag:165"
+msgstr "title"
+
+msgctxt "post_tag"
+msgid "post_tag:166"
+msgstr "trackbacks"
+
+msgctxt "post_tag"
+msgid "post_tag:167"
+msgstr "twitter"
+
+msgctxt "post_tag"
+msgid "post_tag:168"
+msgstr "unculpable"
+
+msgctxt "post_tag"
+msgid "post_tag:169"
+msgstr "Unseen"
+
+msgctxt "post_tag"
+msgid "post_tag:170"
+msgstr "video"
+
+msgctxt "post_tag"
+msgid "post_tag:171"
+msgstr "videopress"
+
+msgctxt "post_tag"
+msgid "post_tag:172"
+msgstr "withered brandnew"
+
+msgctxt "post_tag"
+msgid "post_tag:173"
+msgstr "WordPress"
+
+msgctxt "post_tag"
+msgid "post_tag:174"
+msgstr "wordpress.tv"
+
+msgctxt "post_tag"
+msgid "post_tag:175"
+msgstr "xanthopsia"
+
+msgctxt "nav_menu"
+msgid "nav_menu:176"
+msgstr "All Pages"
+
+msgctxt "nav_menu"
+msgid "nav_menu:178"
+msgstr "All Pages Flat"
+
+msgctxt "nav_menu"
+msgid "nav_menu:180"
+msgstr "Empty Menu"
+
+msgctxt "nav_menu"
+msgid "nav_menu:177"
+msgstr "Short"
+
+msgctxt "nav_menu"
+msgid "nav_menu:179"
+msgstr "Testing Menu"
+
+msgctxt "post_format"
+msgid "post_format:182"
+msgstr "Aside"
+
+msgctxt "post_format"
+msgid "post_format:189"
+msgstr "Audio"
+
+msgctxt "post_format"
+msgid "post_format:183"
+msgstr "Chat"
+
+msgctxt "post_format"
+msgid "post_format:181"
+msgstr "Gallery"
+
+msgctxt "post_format"
+msgid "post_format:185"
+msgstr "Image"
+
+msgctxt "post_format"
+msgid "post_format:184"
+msgstr "Link"
+
+msgctxt "post_format"
+msgid "post_format:186"
+msgstr "Quote"
+
+msgctxt "post_format"
+msgid "post_format:187"
+msgstr "Status"
+
+msgctxt "post_format"
+msgid "post_format:188"
+msgstr "Video"
