@@ -3,7 +3,7 @@
 Plugin Name: Shifter – Artifact Helper
 Plugin URI: https://github.com/getshifter/shifter-artifact-helper
 Description: Helper tool for building Shifter Artifacts
-Version: 1.0.2
+Version: 1.0.3
 Author: Shifter Team
 Author URI: https://getshifter.io
 License: GPLv2 or later
@@ -62,7 +62,7 @@ add_action(
  * Callback function for WP JSON REST API
  *
  * @param array $data
- * 
+ *
  * @return object
  */
 function shifter_urls_for_rest_api($data=[])
