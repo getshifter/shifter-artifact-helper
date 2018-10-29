@@ -9,11 +9,22 @@ require 'json'
 REMOTE_SERVER='https://127.0.0.1:8443'
 
 def get_urls(path:, urls: 0, max: 100)
+  if max
+    url = "#{REMOTE_SERVER}#{path}?urls=#{urls}&max=#{max}"
+  else
+    url = "#{REMOTE_SERVER}#{path}?urls=#{urls}"
+  end
+  p url
   res = open(
-    "#{REMOTE_SERVER}#{path}?urls=#{urls}&max=#{max}",
+    url,
     :ssl_verify_mode => OpenSSL::SSL::VERIFY_NONE
   ).read
-  return JSON.load(res)
+
+  begin
+    JSON.load(res)
+  rescue
+    false
+  end
 end
 
 def get_urls_wprest(path:, page: 1, limit: 100)
@@ -28,7 +39,6 @@ def count_by(items, type, value)
   result = items['items'].select { |i| i[type] == value }
   return result.size
 end
-
 
 class TestRootPath < Test::Unit::TestCase
   description '/?urls=0&max=100 and ?page=1&limit=100'
@@ -312,6 +322,35 @@ class TestUrlsWithBogo < Test::Unit::TestCase
     'en_url' => [en_url['count'], 19],
   )
   def test_urls_count(data)
+    expected, actual = data
+    assert_equal(expected, actual)
+  end
+end
+
+class TestQueryPattern < Test::Unit::TestCase
+  description 'Testing various patterns of querystring'
+
+  only_urls = get_urls(path: '/', urls: 0, max: nil)
+  urls_and_max1 = get_urls(path: '/', urls: 0, max: 1)
+  urls_and_max25 = get_urls(path: '/', urls: 0, max: 25)
+  urls_and_max100 = get_urls(path: '/', urls: 0, max: 100)
+
+  paginate_only_urls = get_urls(path: '/en/', urls: 0, max: nil)
+  paginate_urls_and_max1 = get_urls(path: '/en/', urls: 0, max: 1)
+  paginate_urls_and_max25 = get_urls(path: '/en/', urls: 0, max: 25)
+  paginate_urls_and_max100 = get_urls(path: '/en/', urls: 0, max: 100)
+
+  data(
+    'only_urls' => [only_urls['count'], 100],
+    'urls_and_max1' => [urls_and_max1['count'], 1],
+    'urls_and_max25' => [urls_and_max25['count'], 25],
+    'urls_and_max100' => [urls_and_max100['count'], 100],
+    'paginate_only_urls' => [paginate_only_urls['count'], 19],
+    'paginate_urls_and_max1' => [paginate_urls_and_max1['count'], 1],
+    'paginate_urls_and_max25' => [paginate_urls_and_max25['count'], 19],
+    'paginate_urls_and_max100' => [paginate_urls_and_max100['count'], 19],
+  )
+  def test_query_patterns(data)
     expected, actual = data
     assert_equal(expected, actual)
   end
