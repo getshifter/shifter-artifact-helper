@@ -682,7 +682,7 @@ class ShifterUrls
      * 
      * @return string
      */
-    static public function link_normalize($link)
+    static public function link_normalize($link, $remove_index_html = false)
     {
         $link = remove_query_arg(
             ['urls','max','page','limit', 'disables'],
@@ -694,6 +694,9 @@ class ShifterUrls
                 '/',
                 $link
             );
+        }
+        if ($remove_index_html && preg_match('#/index\.html?$#', $link)) {
+            $link = preg_replace('#/index\.html?$', '/', $link);
         }
         return $link;
     }
@@ -1551,7 +1554,9 @@ class ShifterUrls
                 continue;
             }
 
-            $redirection_link = trailingslashit(self::link_normalize($redirection->get_url()));
+            $redirection_link = trailingslashit(
+                self::link_normalize($redirection->get_url(), true)
+            );
             if ($redirection_link === $this->get('home_url')) {
                 continue;
             }
