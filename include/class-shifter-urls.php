@@ -696,7 +696,7 @@ class ShifterUrls
             );
         }
         if ($remove_index_html && preg_match('#/index\.html?$#', $link)) {
-            $link = preg_replace('#/index\.html?$', '/', $link);
+            $link = preg_replace('#/index\.html?$#', '/', $link);
         }
         return $link;
     }
