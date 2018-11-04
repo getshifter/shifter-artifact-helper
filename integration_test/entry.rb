@@ -83,7 +83,7 @@ class TestRootPath < Test::Unit::TestCase
   items = get_urls(path: '/', urls: 4)
 
   data(
-    'all_counts' => [items['count'], 23],
+    'all_counts' => [items['count'], 24],
     'start' => [items['start'], 400],
     'end' => [items['end'], 500],
     'finished' => [items['finished'], true],
@@ -97,7 +97,7 @@ class TestRootPath < Test::Unit::TestCase
   # for rest-api
   items = get_urls_wprest(path: '/', page: 5)
   data(
-    'all_counts' => [items['count'], 23],
+    'all_counts' => [items['count'], 24],
     'start' => [items['start'], 400],
     'end' => [items['end'], 500],
     'finished' => [items['finished'], true],
@@ -113,7 +113,7 @@ class TestRootPath < Test::Unit::TestCase
   items = get_urls(path: '/', urls: 0, max: 500)
 
   data(
-    'all_counts' => [items['count'], 423],
+    'all_counts' => [items['count'], 424],
     'start' => [items['start'], 0],
     'end' => [items['end'], 500],
     'finished' => [items['finished'], true],
@@ -124,7 +124,7 @@ class TestRootPath < Test::Unit::TestCase
     'amphtml' => [count_by(items, 'link_type', 'amphtml'), 38],
     'term_link' => [count_by(items, 'link_type', 'term_link'), 199],
     'archive_link' => [count_by(items, 'link_type', 'archive_link'), 86],
-    'redirection' => [count_by(items, 'link_type', 'redirection'), 13],
+    'redirection' => [count_by(items, 'link_type', 'redirection'), 14],
   )
 
   def test_root_path_all(data)
@@ -135,7 +135,7 @@ class TestRootPath < Test::Unit::TestCase
   # for rest-api
   items = get_urls_wprest(path: '/', page: 1, limit: 500)
   data(
-    'all_counts' => [items['count'], 423],
+    'all_counts' => [items['count'], 424],
     'start' => [items['start'], 0],
     'end' => [items['end'], 500],
     'finished' => [items['finished'], true],
@@ -146,7 +146,7 @@ class TestRootPath < Test::Unit::TestCase
     'amphtml' => [count_by(items, 'link_type', 'amphtml'), 38],
     'term_link' => [count_by(items, 'link_type', 'term_link'), 199],
     'archive_link' => [count_by(items, 'link_type', 'archive_link'), 86],
-    'redirection' => [count_by(items, 'link_type', 'redirection'), 13],
+    'redirection' => [count_by(items, 'link_type', 'redirection'), 14],
   )
 
   def test_rest_root_path_all(data)
@@ -190,9 +190,9 @@ class TestRedirectLimit < Test::Unit::TestCase
   items = get_urls(path: '/', urls: 42, max: 10)
 
   data(
-    'all_counts' => [items['count'], 3],
+    'all_counts' => [items['count'], 4],
     'finished' => [items['finished'], true],
-    'redirection' => [count_by(items, 'link_type', 'redirection'), 3],
+    'redirection' => [count_by(items, 'link_type', 'redirection'), 4],
   )
 
   def test_redirection_counts_end(data)
@@ -203,9 +203,9 @@ class TestRedirectLimit < Test::Unit::TestCase
   # for rest-api
   items = get_urls_wprest(path: '/', page: 43, limit: 10)
   data(
-    'all_counts' => [items['count'], 3],
+    'all_counts' => [items['count'], 4],
     'finished' => [items['finished'], true],
-    'redirection' => [count_by(items, 'link_type', 'redirection'), 3],
+    'redirection' => [count_by(items, 'link_type', 'redirection'), 4],
   )
 
   def test_rest_redirection_counts_end(data)
