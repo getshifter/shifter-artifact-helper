@@ -592,7 +592,7 @@ class ShifterUrls
      */
     private function _check_link_format($link)
     {
-        if (!$link || trailingslashit($link) === trailingslashit($this->get('home_url'))) {
+        if (!$link) {
             return false;
         }
         if (!preg_match('#/$#', $link)) {
@@ -1548,18 +1548,14 @@ class ShifterUrls
             $redirection_list = Red_Item::get_all();
             $this->_set_transient($key, $redirection_list);
         }
-
         foreach ( $redirection_list as $redirection ) {
             if (!$redirection->is_enabled() || $redirection->is_regex()) {
                 continue;
             }
-
             $redirection_link = trailingslashit(
                 self::link_normalize($redirection->get_url(), true)
             );
-            if ($redirection_link === $this->get('home_url')) {
-                continue;
-            }
+
             if (!$this->_check_link_format($redirection_link)) {
                 continue;
             }
