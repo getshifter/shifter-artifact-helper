@@ -51,14 +51,14 @@ class ShifterOneLogin
             && $token !== 'NONE';
     }
 
-    private static function get_nonce_action($username)
+    private static function get_nonce_action($user_id)
     {
-        return self::REST_ENDPOINT.self::REST_PATH.'/'.$username;
+        return self::REST_ENDPOINT.self::REST_PATH.'/'.$user_id;
     }
 
-    private static function create_nonce($username)
+    private static function create_nonce($user_id)
     {
-        return wp_create_nonce(self::get_nonce_action($username));
+        return wp_create_nonce(self::get_nonce_action($user_id));
     }
 
     private static function chk_onetime_token($onetime_token, $user_id = 0)
@@ -87,10 +87,8 @@ class ShifterOneLogin
 
     public static function chk_login_param($user_id, $token, $nonce)
     {
-        $user_info = get_userdata($user_id);
-        return $user_info && !is_wp_error($user_info)
-            && self::chk_onetime_token($token, $user_id)
-            && wp_verify_nonce($nonce, self::get_nonce_action($user_info->user_login));
+        return self::chk_onetime_token($token, $user_id)
+            && wp_verify_nonce($nonce, self::get_nonce_action($user_id));
     }
 
     public static function current_page_url() {
@@ -121,7 +119,7 @@ class ShifterOneLogin
             $url_params = [
                 'uid' => $user->ID,
                 'token' => self::onetime_token($user->ID),
-                'nonce' => self::create_nonce($username),
+                'nonce' => self::create_nonce($user->ID),
             ];
         }
         $magic_link = add_query_arg($url_params, $magic_link);

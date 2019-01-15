@@ -3,7 +3,7 @@
 Plugin Name: Shifter – Artifact Helper
 Plugin URI: https://github.com/getshifter/shifter-artifact-helper
 Description: Helper tool for building Shifter Artifacts
-Version: 1.0.5
+Version: 1.0.6
 Author: Shifter Team
 Author URI: https://getshifter.io
 License: GPLv2 or later
@@ -197,7 +197,7 @@ add_action(
     'init',
     function () {
         if( isset($_GET['token']) && isset($_GET['uid']) && isset($_GET['nonce']) ){
-            $user_id = (int)sanitize_key($_GET['uid']);
+            $user_id = (int)$_GET['uid'];
             $token = sanitize_key($_GET['token']);
             $nonce = sanitize_key($_GET['nonce']);
             if ( ! ShifterOneLogin::chk_login_param($user_id, $token, $nonce) ) {
