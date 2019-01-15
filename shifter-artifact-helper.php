@@ -197,7 +197,7 @@ add_action(
     'init',
     function () {
         if( isset($_GET['token']) && isset($_GET['uid']) && isset($_GET['nonce']) ){
-            $user_id = (int)sanitize_key($_GET['uid']);
+            $user_id = (int)$_GET['uid'];
             $token = sanitize_key($_GET['token']);
             $nonce = sanitize_key($_GET['nonce']);
             if ( ! ShifterOneLogin::chk_login_param($user_id, $token, $nonce) ) {
