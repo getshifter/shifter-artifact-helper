@@ -3,7 +3,7 @@
 Plugin Name: Shifter – Artifact Helper
 Plugin URI: https://github.com/getshifter/shifter-artifact-helper
 Description: Helper tool for building Shifter Artifacts
-Version: 1.0.4
+Version: 1.0.5
 Author: Shifter Team
 Author URI: https://getshifter.io
 License: GPLv2 or later
@@ -11,6 +11,7 @@ License: GPLv2 or later
 
 // Shifter URLs
 require_once __DIR__.'/include/class-shifter-urls.php';
+require_once __DIR__.'/include/class-shifter-onelogin.php';
 
 /**
  * Shifter URLs v1
@@ -55,6 +56,30 @@ add_action(
                 'callback' => 'shifter_urls_for_rest_api'
             ]
         );
+        register_rest_route(
+            ShifterOneLogin::REST_ENDPOINT,
+            ShifterOneLogin::REST_PATH,
+            [
+                'methods'  => WP_REST_Server::READABLE,
+                'callback' => 'shifter_one_login'
+            ]
+        );
+        register_rest_route(
+            ShifterOneLogin::REST_ENDPOINT,
+            ShifterOneLogin::REST_PATH.'/(?P<username>.+)',
+            [
+                'methods'  => WP_REST_Server::READABLE,
+                'callback' => 'shifter_one_login'
+            ]
+        );
+        register_rest_route(
+            ShifterOneLogin::REST_ENDPOINT,
+            ShifterOneLogin::REST_PATH.'/(?P<action>.+)/(?P<username>.+)',
+            [
+                'methods'  => WP_REST_Server::CREATABLE,
+                'callback' => 'shifter_one_login'
+            ]
+        );
     }
 );
 
@@ -80,6 +105,113 @@ function shifter_urls_for_rest_api($data=[])
 
     return $response;
 }
+
+/**
+ * Callback function for WP JSON REST API
+ *
+ * @param array $data
+ *
+ * @return object
+ */
+function shifter_one_login($data=[])
+{
+    if (!defined('SHIFTER_REST_REQUEST')) {
+        define('SHIFTER_REST_REQUEST', true);
+    }
+    if ( ! isset($_SERVER['SHIFTER_LOGIN_TOKEN'])) {
+        $_SERVER['SHIFTER_LOGIN_TOKEN'] = 'NONE';
+    }
+    $json_data = [];
+    $json_data['code'] = 'not_allowed';
+    $json_data['message'] = "Sorry, you are not allowed to do that.";
+    $status = 401;
+
+    $request_method = strtoupper(sanitize_key(isset($_SERVER['REQUEST_METHOD']) ? $_SERVER['REQUEST_METHOD'] : 'GET'));
+    $token = sanitize_key(isset($_REQUEST['token']) ? $_REQUEST['token'] : '');
+    $username = isset($data['username']) && !empty($data['username']) ? $data['username'] : '';
+    $action = sanitize_key(isset($data['action']) && !empty($data['action']) ? $data['action'] : 'get');
+    $json_data['user'] = [ 'user_login' => $username ];
+
+    if (ShifterOneLogin::chk_token($token)) {
+        $user = ShifterOneLogin::get_user_by_loginname($username);
+        $user_info = false;
+        $json_data['action'] = $action;
+
+        switch ($action) {
+        case 'get':
+            if ($user) {
+                $json_data['loginUrl'] = ShifterOneLogin::magic_link($username);
+                $user_info = array(
+                    'ID' => $user->ID,
+                    'user_login' => $username,
+                    'user_email' => $user->user_email,
+                    'role' => $user->roles,
+                );
+                $status = 200;
+            } else {
+                $status = 404;
+            }
+            break;
+        case 'create':
+        case 'update':
+            if ('POST' === $request_method) {
+                $email = sanitize_email(isset($_POST['email']) ? $_POST['email'] : '');
+                $role = sanitize_key(isset($_POST['role']) ? $_POST['role'] : 'administrator');
+                if ($user) {
+                    $user_info = ShifterOneLogin::update_user($username, $email, $role);
+                } else if ('create' === $action) {
+                    $user_info = ShifterOneLogin::create_user($username, $email, $role);
+                } else {
+                    $status = 404;
+                }
+            }
+            if ($user_info) {
+                $status = 200;
+                $json_data['loginUrl'] = ShifterOneLogin::magic_link($username);
+            }
+            break;
+        default:
+            break;
+        }
+    }
+
+    if (404 === $status && false === $user_info) {
+        $json_data['code'] = 'not_found';
+        $json_data['message'] = "That user doesn't exist.";
+    } else if (200 === $status) {
+        $json_data['code'] = 'OK';
+        unset($json_data['message']);
+        $json_data['user'] = $user_info;
+    }
+
+    $response = new WP_REST_Response($json_data);
+    $response->set_status($status);
+
+    return $response;
+}
+
+/**
+ * Magik Login
+ */
+add_action(
+    'init',
+    function () {
+        if( isset($_GET['token']) && isset($_GET['uid']) && isset($_GET['nonce']) ){
+            $user_id = (int)sanitize_key($_GET['uid']);
+            $token = sanitize_key($_GET['token']);
+            $nonce = sanitize_key($_GET['nonce']);
+            if ( ! ShifterOneLogin::chk_login_param($user_id, $token, $nonce) ) {
+                wp_redirect(home_url('/wp-login.php'));
+                exit;
+            } else {
+                wp_set_auth_cookie($user_id);
+                wp_redirect(ShifterOneLogin::current_page_url());
+                exit;
+            }
+        }
+        return;
+    }
+);
 
 // Shifter customize
 

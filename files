@@ -1,2 +1,3 @@
 ./include/class-shifter-urls.php
+./include/class-shifter-onelogin.php
 ./shifter-artifact-helper.php
