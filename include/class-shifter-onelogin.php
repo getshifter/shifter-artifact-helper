@@ -58,7 +58,13 @@ class ShifterOneLogin
 
     private static function create_nonce($user_id)
     {
-        return wp_create_nonce(self::get_nonce_action($user_id));
+        //$nonce = wp_create_nonce(self::get_nonce_action($user_id));
+        $uid = 0;
+        $token = '';
+        $i = wp_nonce_tick();
+        $action = self::get_nonce_action($user_id);
+        $nonce = substr( wp_hash( $i . '|' . $action . '|' . $uid . '|' . $token, 'nonce' ), -12, 10 );
+        return $nonce;
     }
 
     private static function chk_onetime_token($onetime_token, $user_id = 0)
