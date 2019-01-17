@@ -3,7 +3,7 @@
 Plugin Name: Shifter – Artifact Helper
 Plugin URI: https://github.com/getshifter/shifter-artifact-helper
 Description: Helper tool for building Shifter Artifacts
-Version: 1.0.6
+Version: 1.0.7
 Author: Shifter Team
 Author URI: https://getshifter.io
 License: GPLv2 or later
@@ -200,13 +200,31 @@ add_action(
             $user_id = (int)$_GET['uid'];
             $token = sanitize_key($_GET['token']);
             $nonce = sanitize_key($_GET['nonce']);
-            if ( ! ShifterOneLogin::chk_login_param($user_id, $token, $nonce) ) {
-                wp_redirect(home_url('/wp-login.php'));
-                exit;
+            if ( !is_user_logged_in() ) {
+                if ( ! ShifterOneLogin::chk_login_param($user_id, $token, $nonce) ) {
+                    wp_logout();
+                    exit;
+                } else {
+                    wp_set_auth_cookie($user_id);
+                    wp_redirect(ShifterOneLogin::current_page_url());
+                    exit;
+                }
             } else {
-                wp_set_auth_cookie($user_id);
-                wp_redirect(ShifterOneLogin::current_page_url());
-                exit;
+                $user = wp_get_current_user();
+                if ( $user_id === $user->ID ) {
+                    wp_redirect(home_url('/wp-admin/'));
+                    exit;
+                } else {
+                    wp_logout();
+                    $url_params = [
+                        'uid' => $user_id,
+                        'token' => $token,
+                        'nonce' => $nonce,
+                    ];
+                    $magic_link = add_query_arg($url_params, home_url('/wp-admin/'));
+                    wp_redirect($magic_link);
+                    exit;
+                }
             }
         }
         return;
@@ -214,6 +232,34 @@ add_action(
 );
 
 // Shifter customize
+
+/**
+ * Add Magic link
+ */
+add_filter( 'manage_users_columns', function ($columns) {
+	$columns['magic_link'] = 'Magic link';
+	return $columns;
+});
+add_filter( 'manage_users_custom_column', function ($dummy, $column, $user_id){
+	if ( $column == 'magic_link' ) {
+        $user_info = get_userdata($user_id);
+        $magik_link = ShifterOneLogin::magic_link($user_info->user_login);
+        $res = '<script>
+        function doCopy'.$user_info->ID.'(txt){
+          var ta = document.createElement("textarea");
+          document.getElementsByTagName("body")[0].appendChild(ta);
+          ta.value=txt;
+          ta.select();
+          var ret = document.execCommand("copy");
+          ta.parentNode.removeChild(ta);
+          alert("Copied the '.$user_info->user_login.'\'s magic link");
+        }
+        </script>';
+        $res .= '<a href="'.$magik_link.'">Magic Link</a><br/>';
+        $res .= '<input class="button" type="submit" value="copy" onclick="doCopy'.$user_info->ID.'(\''.$magik_link.'\')">';
+        return $res;
+	}
+}, 10, 3 );
 
 /**
  * Remove /index.php/ from Permalink
