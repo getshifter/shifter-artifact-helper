@@ -107,21 +107,31 @@ class ShifterOneLogin
         return remove_query_arg(['uid', 'token', 'nonce'], $req_uri);
     }
 
-    public static function get_user_by_loginname($username)
+    public static function get_user_by_loginname($username, $email = '')
     {
-        $user = get_user_by('login', $username);
-        if ($user && !is_wp_error($user)) {
+//        var_dump([$username, $email]);
+//        var_dump($user = get_user_by('email', $email));
+        if ( empty($email) || false === ($user = get_user_by('email', $email)) ) {
+            $user = get_user_by('login', $username);
+        }
+        if (!$user && !empty($email)) {
+            $user = self::get_user_by_loginname($email);
+        }
+//        var_dump($user);
+        if ($user) {
             return $user;
         } else {
             return false;
         }
     }
 
-    public static function magic_link($username)
+    public static function magic_link($username, $email = '')
     {
+        $username = wp_slash($username);
+        $email = wp_slash($email);
         $magic_link = home_url('/wp-admin/');
         $url_params = [];
-        if ($user = self::get_user_by_loginname($username)) {
+        if ($user = self::get_user_by_loginname($username, $email)) {
             $url_params = [
                 'uid' => $user->ID,
                 'token' => self::onetime_token($user->ID),
@@ -134,18 +144,34 @@ class ShifterOneLogin
 
     public static function create_user($username, $email, $role)
     {
+        $username = wp_slash($username);
+        $email = wp_slash($email);
         $user_pass = self::create_passwd();
         $userdata = array(
             'user_login'  => $username,
             'user_pass'   => $user_pass,
             'role'        => $role,
         );
-        if (!empty($email)) {
+        if ( ! empty($email) ) {
             $userdata['user_email'] = $email;
         }
         $user_id = wp_insert_user($userdata);
         if ( ! is_wp_error( $user_id ) ) {
             $userdata['ID'] = $user_id;
+        } else if ( ! empty($email) ) {
+            $username = $email;
+            $userdata = array(
+                'user_login'  => $username,
+                'user_pass'   => $user_pass,
+                'user_email'  => $email,
+                'role'        => $role,
+            );
+            $user_id = wp_insert_user($userdata);
+            if ( ! is_wp_error( $user_id ) ) {
+                $userdata['ID'] = $user_id;
+            } else {
+                $userdata = false;
+            }
         } else {
             $userdata = false;
         }
@@ -154,8 +180,10 @@ class ShifterOneLogin
 
     public static function update_user($username, $email, $role)
     {
+        $username = wp_slash($username);
+        $email = wp_slash($email);
         $userdata = false;
-        if ( $user = self::get_user_by_loginname($username) ) {
+        if ( $user = self::get_user_by_loginname($username, $email) ) {
             $userdata = array(
                 'ID'          => $user->ID,
                 'role'        => $role,

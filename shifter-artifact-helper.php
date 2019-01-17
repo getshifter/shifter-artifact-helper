@@ -3,7 +3,7 @@
 Plugin Name: Shifter – Artifact Helper
 Plugin URI: https://github.com/getshifter/shifter-artifact-helper
 Description: Helper tool for building Shifter Artifacts
-Version: 1.0.7
+Version: 1.0.8
 Author: Shifter Team
 Author URI: https://getshifter.io
 License: GPLv2 or later
@@ -133,14 +133,16 @@ function shifter_one_login($data=[])
     $json_data['user'] = [ 'user_login' => $username ];
 
     if (ShifterOneLogin::chk_token($token)) {
-        $user = ShifterOneLogin::get_user_by_loginname($username);
+        $email = sanitize_email(isset($_REQUEST['email']) ? $_REQUEST['email'] : '');
+        $user = ShifterOneLogin::get_user_by_loginname($username, $email);
         $user_info = false;
         $json_data['action'] = $action;
 
         switch ($action) {
         case 'get':
             if ($user) {
-                $json_data['loginUrl'] = ShifterOneLogin::magic_link($username);
+                $username = $user->user_login;
+                $json_data['loginUrl'] = ShifterOneLogin::magic_link($username, $email);
                 $user_info = array(
                     'ID' => $user->ID,
                     'user_login' => $username,
@@ -155,9 +157,10 @@ function shifter_one_login($data=[])
         case 'create':
         case 'update':
             if ('POST' === $request_method) {
-                $email = sanitize_email(isset($_POST['email']) ? $_POST['email'] : '');
+                $user = ShifterOneLogin::get_user_by_loginname($username, $email);
                 $role = sanitize_key(isset($_POST['role']) ? $_POST['role'] : 'administrator');
                 if ($user) {
+                    $username = $user->user_login;
                     $user_info = ShifterOneLogin::update_user($username, $email, $role);
                 } else if ('create' === $action) {
                     $user_info = ShifterOneLogin::create_user($username, $email, $role);
@@ -167,7 +170,7 @@ function shifter_one_login($data=[])
             }
             if ($user_info) {
                 $status = 200;
-                $json_data['loginUrl'] = ShifterOneLogin::magic_link($username);
+                $json_data['loginUrl'] = ShifterOneLogin::magic_link($username, $email);
             }
             break;
         default:
