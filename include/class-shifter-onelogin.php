@@ -1,10 +1,6 @@
 <?php
 class ShifterOneLogin
 {
-    private $_var = [
-        'access_token' => '',
-    ];
-
     static $instance;
 
     const REST_ENDPOINT = 'shifter/v1';
@@ -63,7 +59,7 @@ class ShifterOneLogin
         $token = '';
         $i = wp_nonce_tick();
         $action = self::get_nonce_action($user_id);
-        $nonce = substr( wp_hash( $i . '|' . $action . '|' . $uid . '|' . $token, 'nonce' ), -12, 10 );
+        $nonce = substr(wp_hash( $i . '|' . $action . '|' . $uid . '|' . $token, 'nonce' ), -12, 10);
         return $nonce;
     }
 
@@ -81,7 +77,7 @@ class ShifterOneLogin
     private static function onetime_token($user_id = 0)
     {
         $action = self::ONETIME_TOKEN_KEY.$user_id;
-        if ( false === ( $token = get_transient($action) ) ) {
+        if (false === ($token = get_transient($action))) {
             $time = time();
             $key = self::create_passwd();
             $token  = wp_hash($key.$action.$time);
@@ -107,17 +103,16 @@ class ShifterOneLogin
         return remove_query_arg(['uid', 'token', 'nonce'], $req_uri);
     }
 
-    public static function get_user_by_loginname($username, $email = '')
+    public static function get_user($username, $email = '')
     {
-//        var_dump([$username, $email]);
-//        var_dump($user = get_user_by('email', $email));
-        if ( empty($email) || false === ($user = get_user_by('email', $email)) ) {
+        $username = sanitize_user($username);
+        $email = sanitize_email($email);
+        if (empty($email) || false === ($user = get_user_by('email', $email))) {
             $user = get_user_by('login', $username);
         }
         if (!$user && !empty($email)) {
-            $user = self::get_user_by_loginname($email);
+            $user = self::get_user(sanitize_user($email));
         }
-//        var_dump($user);
         if ($user) {
             return $user;
         } else {
@@ -125,13 +120,13 @@ class ShifterOneLogin
         }
     }
 
-    public static function magic_link($username, $email = '')
+    public static function magic_link($username, $email = '', $redirect_path = '/wp-admin/')
     {
         $username = wp_slash($username);
         $email = wp_slash($email);
-        $magic_link = home_url('/wp-admin/');
+        $magic_link = home_url($redirect_path);
         $url_params = [];
-        if ($user = self::get_user_by_loginname($username, $email)) {
+        if ($user = self::get_user($username, $email)) {
             $url_params = [
                 'uid' => $user->ID,
                 'token' => self::onetime_token($user->ID),
@@ -146,34 +141,42 @@ class ShifterOneLogin
     {
         $username = wp_slash($username);
         $email = wp_slash($email);
-        $user_pass = self::create_passwd();
-        $userdata = array(
-            'user_login'  => $username,
-            'user_pass'   => $user_pass,
-            'role'        => $role,
-        );
-        if ( ! empty($email) ) {
-            $userdata['user_email'] = $email;
-        }
-        $user_id = wp_insert_user($userdata);
-        if ( ! is_wp_error( $user_id ) ) {
-            $userdata['ID'] = $user_id;
-        } else if ( ! empty($email) ) {
-            $username = $email;
-            $userdata = array(
-                'user_login'  => $username,
+        $userdata = false;
+
+        if ($user = self::get_user($username, $email)) {
+            // 対象が既存ユーザだった場合は update
+            $userdata = self::update_user($username, $email, $role);
+
+        } else {
+            $user_pass = self::create_passwd();
+            $userdata = [
+                'user_login'  => sanitize_user($username),
                 'user_pass'   => $user_pass,
-                'user_email'  => $email,
                 'role'        => $role,
-            );
+            ];
+            if (!empty($email)) {
+                $userdata['user_email'] = sanitize_email($email);
+            }
             $user_id = wp_insert_user($userdata);
-            if ( ! is_wp_error( $user_id ) ) {
+            if (!is_wp_error($user_id)) {
                 $userdata['ID'] = $user_id;
+            } else if ( ! empty($email) ) {
+                // ユーザ作成失敗したら email アドレスをユーザ名とみなして再度チャレンジ
+                $userdata = [
+                    'user_login'  => sanitize_user($email),
+                    'user_pass'   => $user_pass,
+                    'user_email'  => sanitize_email($email),
+                    'role'        => $role,
+                ];
+                $user_id = wp_insert_user($userdata);
+                if (!is_wp_error($user_id)) {
+                    $userdata['ID'] = $user_id;
+                } else {
+                    $userdata = false;
+                }
             } else {
                 $userdata = false;
             }
-        } else {
-            $userdata = false;
         }
         return $userdata;
     }
@@ -183,17 +186,18 @@ class ShifterOneLogin
         $username = wp_slash($username);
         $email = wp_slash($email);
         $userdata = false;
-        if ( $user = self::get_user_by_loginname($username, $email) ) {
-            $userdata = array(
+
+        if ($user = self::get_user($username, $email)) {
+            $userdata = [
                 'ID'          => $user->ID,
                 'role'        => $role,
-            );
+            ];
             if (!empty($email)) {
-                $userdata['user_email'] = $email;
+                $userdata['user_email'] = sanitize_email($email);
             }
             $user_id = wp_update_user($userdata);
-            if ( ! is_wp_error( $user_id ) ) {
-                $userdata['user_login'] = $username;
+            if (!is_wp_error($user_id)) {
+                $userdata['user_login'] = $user->user_login;
             } else {
                 $userdata = false;
             }
