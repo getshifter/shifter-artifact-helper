@@ -3,7 +3,7 @@
 Plugin Name: Shifter – Artifact Helper
 Plugin URI: https://github.com/getshifter/shifter-artifact-helper
 Description: Helper tool for building Shifter Artifacts
-Version: 1.0.9
+Version: 1.0.10
 Author: Shifter Team
 Author URI: https://getshifter.io
 License: GPLv2 or later
@@ -242,31 +242,36 @@ add_action(
     'init',
     function () {
         if (isset($_GET['token']) && isset($_GET['uid']) && isset($_GET['nonce'])) {
-            $user_id = (int)$_GET['uid'];
-            $token = sanitize_key($_GET['token']);
-            $nonce = sanitize_key($_GET['nonce']);
-            $redirect_link = home_url('/wp-admin/');
-            if (!is_user_logged_in()) {
-                if (!ShifterOneLogin::chk_login_param($user_id, $token, $nonce)) {
-                    wp_logout();
+            try {
+                $user_id = (int)$_GET['uid'];
+                $token = sanitize_key($_GET['token']);
+                $nonce = sanitize_key($_GET['nonce']);
+                $redirect_link = home_url('/wp-admin/');
+                if (!is_user_logged_in()) {
+                    if (!ShifterOneLogin::chk_login_param($user_id, $token, $nonce)) {
+                        wp_logout();
+                    } else {
+                        wp_set_auth_cookie($user_id);
+                    }
+                    $redirect_link = ShifterOneLogin::current_page_url();
                 } else {
-                    wp_set_auth_cookie($user_id);
+                    $user = wp_get_current_user();
+                    if ($user_id !== $user->ID) {
+                        wp_logout();
+                        $url_params = [
+                            'uid' => $user_id,
+                            'token' => $token,
+                            'nonce' => $nonce,
+                        ];
+                        $redirect_link = add_query_arg($url_params, $redirect_link);
+                    }
                 }
-                $redirect_link = ShifterOneLogin::current_page_url();
-            } else {
-                $user = wp_get_current_user();
-                if ($user_id !== $user->ID) {
-                    wp_logout();
-                    $url_params = [
-                        'uid' => $user_id,
-                        'token' => $token,
-                        'nonce' => $nonce,
-                    ];
-                    $redirect_link = add_query_arg($url_params, $redirect_link);
-                }
+                wp_redirect($redirect_link);
+                exit;
+            } catch ( Exception $ex ) {
+                $error_msg = $ex->getMessage();
+                wp_die($error_msg, 'Shifter Login');
             }
-            wp_redirect($redirect_link);
-            exit;
         }
         return;
     }
