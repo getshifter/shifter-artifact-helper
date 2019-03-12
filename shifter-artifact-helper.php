@@ -3,7 +3,7 @@
 Plugin Name: Shifter – Artifact Helper
 Plugin URI: https://github.com/getshifter/shifter-artifact-helper
 Description: Helper tool for building Shifter Artifacts
-Version: 1.0.10
+Version: 1.0.11
 Author: Shifter Team
 Author URI: https://getshifter.io
 License: GPLv2 or later
@@ -270,6 +270,7 @@ add_action(
                 exit;
             } catch ( Exception $ex ) {
                 $error_msg = $ex->getMessage();
+                error_log($error_msg, 0);
                 wp_die($error_msg, 'Shifter Login');
             }
         }
