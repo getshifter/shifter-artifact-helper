@@ -453,6 +453,7 @@ function shifter_register_settings()
     register_setting('shifter-options', 'shifter_skip_monthly');
     register_setting('shifter-options', 'shifter_skip_daily');
     register_setting('shifter-options', 'shifter_skip_terms');
+    register_setting('shifter-options', 'shifter_skip_tag');
     register_setting('shifter-options', 'shifter_skip_author');
     register_setting('shifter-options', 'shifter_skip_feed');
 }
@@ -470,6 +471,7 @@ function shifter_settings_page()
         "shifter_skip_monthly"    => "monthly archives",
         "shifter_skip_daily"      => "daily archives",
         "shifter_skip_terms"      => "term archives",
+        "shifter_skip_tag"        => "tag archives",
         "shifter_skip_author"     => "author archives",
         "shifter_skip_feed"       => "feeds",
     ];

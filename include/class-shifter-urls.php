@@ -1147,6 +1147,9 @@ class ShifterUrls
                 $this->_set_transient($key, $taxonomy_names);
             }
             foreach ($taxonomy_names as $taxonomy_name) {
+                if ($this->_check_skip(str_replace($post_type.'_', '', $taxonomy_name))) {
+                    continue;
+                }
                 $key = __METHOD__."-{$post_type}-{$taxonomy_name}";
                 if (false === ($terms = $this->_get_transient($key)) ) {
                     $terms = get_terms($taxonomy_name, 'orderby=count&hide_empty=1');
