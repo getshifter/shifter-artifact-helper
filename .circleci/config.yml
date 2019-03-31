@@ -35,6 +35,7 @@ jobs:
           name: run test-unit
           command: |
             cd integration_test
+            gem install bundler -N
             bundle install
             bundle exec ruby ./entry.rb
   release:
