@@ -1490,6 +1490,8 @@ class ShifterUrls
      */
     private function _authors_urls(&$urls = array())
     {
+        global $wpdb;
+
         if (self::FINAL === $this->_urls_init($urls)) {
             return self::FINAL;
         }
@@ -1501,13 +1503,34 @@ class ShifterUrls
         if (false === ($authors_links = $this->_get_transient($key))) {
             preg_match_all(
                 '/href=["\']([^"\']*)["\']/',
-                wp_list_authors(['style'=>'none', 'echo'=>false]),
+                wp_list_authors(['style'=>'none', 'echo'=>false, 'exclude_admin'=>false]),
                 $matches,
                 PREG_SET_ORDER
             );
             $authors_links = [];
             foreach ((array)$matches as $match) {
-                $authors_links[] = self::link_normalize($match[1]);
+                $authors_link = self::link_normalize($match[1]);
+                $authors_links[] = $authors_link;
+                $author_name = preg_replace('#^.*/([^/]+)/?$#', '$1', $authors_link);
+                $sql =
+                    "SELECT count(*)".
+                    " FROM {$wpdb->posts}".
+                    " WHERE post_status=%s".
+                    " AND post_type=%s".
+                    " AND post_author =".
+                    " (SELECT ID FROM {$wpdb->users} WHERE user_login=%s)"
+                    ;
+                $sql = $wpdb->prepare(
+                    $sql,
+                    'publish',
+                    'post',
+                    $author_name
+                );
+                $posts_count = $wpdb->get_var($sql);
+                $pagenate_urls = $this->_get_paginates($authors_link, $posts_count);
+                foreach ($pagenate_urls as $pagenate_url) {
+                    $authors_links[] = $pagenate_url;
+                }
             }
             unset($matches);
             $this->_set_transient($key, $authors_links);
