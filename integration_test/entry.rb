@@ -83,7 +83,7 @@ class TestRootPath < Test::Unit::TestCase
   items = get_urls(path: '/', urls: 4)
 
   data(
-    'all_counts' => [items['count'], 23],
+    'all_counts' => [items['count'], 43],
     'start' => [items['start'], 400],
     'end' => [items['end'], 500],
     'finished' => [items['finished'], true],
@@ -97,7 +97,7 @@ class TestRootPath < Test::Unit::TestCase
   # for rest-api
   items = get_urls_wprest(path: '/', page: 5)
   data(
-    'all_counts' => [items['count'], 23],
+    'all_counts' => [items['count'], 43],
     'start' => [items['start'], 400],
     'end' => [items['end'], 500],
     'finished' => [items['finished'], true],
@@ -113,7 +113,7 @@ class TestRootPath < Test::Unit::TestCase
   items = get_urls(path: '/', urls: 0, max: 500)
 
   data(
-    'all_counts' => [items['count'], 423],
+    'all_counts' => [items['count'], 443],
     'start' => [items['start'], 0],
     'end' => [items['end'], 500],
     'finished' => [items['finished'], true],
@@ -135,7 +135,7 @@ class TestRootPath < Test::Unit::TestCase
   # for rest-api
   items = get_urls_wprest(path: '/', page: 1, limit: 500)
   data(
-    'all_counts' => [items['count'], 423],
+    'all_counts' => [items['count'], 443],
     'start' => [items['start'], 0],
     'end' => [items['end'], 500],
     'finished' => [items['finished'], true],
@@ -158,8 +158,8 @@ end
 
 class TestRedirectLimit < Test::Unit::TestCase
   # Limit case: redirection only items
-  description '/?urls=41&max=10'
-  items = get_urls(path: '/', urls: 41, max: 10)
+  description '/?urls=44&max=10'
+  items = get_urls(path: '/', urls: 43, max: 10)
 
   data(
     'all_counts' => [items['count'], 10],
@@ -173,7 +173,7 @@ class TestRedirectLimit < Test::Unit::TestCase
   end
 
   # for rest-api
-  items = get_urls_wprest(path: '/', page: 42, limit: 10)
+  items = get_urls_wprest(path: '/', page: 44, limit: 10)
   data(
     'all_counts' => [items['count'], 10],
     'finished' => [items['finished'], false],
@@ -186,8 +186,8 @@ class TestRedirectLimit < Test::Unit::TestCase
   end
 
   # Limit case: redirection only items
-  description '/?urls=42&max=10'
-  items = get_urls(path: '/', urls: 42, max: 10)
+  description '/?urls=44&max=10'
+  items = get_urls(path: '/', urls: 44, max: 10)
 
   data(
     'all_counts' => [items['count'], 3],
@@ -201,7 +201,7 @@ class TestRedirectLimit < Test::Unit::TestCase
   end
 
   # for rest-api
-  items = get_urls_wprest(path: '/', page: 43, limit: 10)
+  items = get_urls_wprest(path: '/', page: 45, limit: 10)
   data(
     'all_counts' => [items['count'], 3],
     'finished' => [items['finished'], true],
@@ -278,6 +278,37 @@ class TestArchivePagenates < Test::Unit::TestCase
   end
 end
 
+
+class TestAuthorPagenates < Test::Unit::TestCase
+  description 'Archive pagenation'
+  items = get_urls(path: '/author/admin/')
+
+  data(
+    'all_counts' => [items['count'], 19],
+    'finished' => [items['finished'], true],
+    'paginate_link' => [count_by(items, 'link_type', 'paginate_link'), 19],
+    'request_type' => [items['request_type'], 'ARCHIVE'],
+  )
+
+  def test_archive_case1(data)
+    expected, actual = data
+    assert_equal(expected, actual)
+  end
+
+  # for rest-api
+  items = get_urls_wprest(path: '/author/admin/')
+  data(
+    'all_counts' => [items['count'], 19],
+    'finished' => [items['finished'], true],
+    'paginate_link' => [count_by(items, 'link_type', 'paginate_link'), 19],
+    'request_type' => [items['request_type'], 'ARCHIVE'],
+  )
+
+  def test_rest_archive_case1(data)
+    expected, actual = data
+    assert_equal(expected, actual)
+  end
+end
 
 class TestPostHasNextPage < Test::Unit::TestCase
   description 'has Nextpage'
