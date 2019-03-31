@@ -3,7 +3,7 @@
 Plugin Name: Shifter – Artifact Helper
 Plugin URI: https://github.com/getshifter/shifter-artifact-helper
 Description: Helper tool for building Shifter Artifacts
-Version: 1.0.11
+Version: 1.0.12
 Author: Shifter Team
 Author URI: https://getshifter.io
 License: GPLv2 or later
@@ -351,6 +351,13 @@ add_action(
 /**
  * Relative path
  */
+function shifter_convert_app_url($content) {
+    return preg_replace(
+        '#(https://|//)[0-9a-z]{8}-[0-9a-z]{4}-[0-9a-z]{4}-[0-9a-z]{4}-[0-9a-z]{12}\.(app|appdev)\.getshifter\.io(:[0-9]{5})?/#',
+        '/',
+        $content
+    );
+}
 add_action(
     'init',
     function () {
@@ -362,22 +369,16 @@ add_action(
                 $host_name   = $parsed_url['host'];
                 $server_name = $host_name . (isset($parsed_url['port']) ? ':'.$parsed_url['port'] : '');
                 if (isset($uploads['url'])) {
-                    $uploads['url'] = preg_replace('#^(https?://|//)[^/]+/#', '/', $uploads['url']);
+                    $uploads['url'] = shifter_convert_app_url($uploads['url']);
                 }
                 if (isset($uploads['baseurl'])) {
-                    $uploads['baseurl'] = preg_replace('#^(https?://|//)[^/]+/#', '/', $uploads['baseurl']);
+                    $uploads['baseurl'] = shifter_convert_app_url($uploads['baseurl']);
                 }
                 return $uploads;
             }
         );
-
-        // shifter app url -> relative path
-        $shifter_content_filter = function ($content) {
-            $content     = preg_replace('#(https?://|//)?([a-z0-9\-]+\.)?app\.getshifter\.io:[0-9]+/#', '/', $content);
-            return $content;
-        };
-        add_filter('the_editor_content', $shifter_content_filter);
-        add_filter('the_content', $shifter_content_filter);
+        add_filter('the_editor_content', 'shifter_convert_app_url');
+        add_filter('the_content', 'shifter_convert_app_url');
     }
 );
 
