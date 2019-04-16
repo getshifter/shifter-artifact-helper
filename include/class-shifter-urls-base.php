@@ -3,65 +3,7 @@ if (!defined('SHIFTER_URLS_CACHE_EXPIRES')) {
     define('SHIFTER_URLS_CACHE_EXPIRES', 300);
 }
 
-/**
- * Get URLs
- *
- * @param string  $request_path
- * @param boolean $rest_request
- * 
- * @return array|string
- */
-function shifter_get_urls($request_path=null, $rest_request=false)
-{
-    if ($rest_request && '/'.ShifterUrls::PATH_404_HTML !== $request_path) {
-        $request_path = trailingslashit($request_path);
-    }
-    $shifter_urls = ShifterUrls::get_instance();
-
-    $page  = $shifter_urls->get_page(0);
-    $limit = $shifter_urls->get_limit(100);
-    $start = $page * $limit;
-
-    $shifter_urls->set_url_count(0);
-    $shifter_urls->set_transient_expires(intval(SHIFTER_URLS_CACHE_EXPIRES));
-    $shifter_urls->set_start($start);
-    $shifter_urls->set_end($start + $limit);
-    if ($rest_request) {
-        $shifter_urls->set_request_uri(home_url($request_path));
-    }
-
-    $json_data = [];
-    $current_url_type = $shifter_urls->current_url_type($request_path, $rest_request);
-    switch ($current_url_type) {
-    case ShifterUrls::URL_TOP:
-        $json_data = $shifter_urls->get_urls_all();
-        break;
-    case ShifterUrls::URL_ARCHIVE:
-        $json_data = $shifter_urls->get_urls_archive();
-        break;
-    case ShifterUrls::URL_SINGULAR:
-        $json_data = $shifter_urls->get_urls_singular();
-        break;
-    case ShifterUrls::URL_404:
-        $json_data = $shifter_urls->get_urls_404();
-        break;
-    default:
-        $json_data = $shifter_urls->get_urls();
-    }
-    unset($shifter_urls);
-
-    // For debug
-    if ($json_data['count'] > 0) {
-        error_log("{$current_url_type}: {$request_path}");
-        foreach ($json_data['items'] as $item) {
-            error_log(json_encode($item));
-        }
-    }
-
-    return $json_data;
-}
-
-class ShifterUrls
+class ShifterUrlsBase
 {
     private $_var = [
         'start' => 0,
@@ -77,7 +19,7 @@ class ShifterUrls
 
     const PATH_404_HTML = 'shifter_404.html';
 
-    const REST_ENDPOINT = 'shifter/v1';
+    const REST_ENDPOINT = SHIFTER_REST_ENDPOINT;
     const REST_PATH     = '/urls';
 
     const URL_TOP = 'TOP';
@@ -90,7 +32,7 @@ class ShifterUrls
      *
      * @return nothing
      */
-    private function __construct()
+    public function __construct()
     {
     }
 
@@ -157,7 +99,7 @@ class ShifterUrls
      * 
      * @return array|strnig
      */
-    private function get($key, $default=null)
+    public function get($key, $default=null)
     {
         if (array_key_exists($key, $this->_var)) {
             return $this->_var[$key];
@@ -204,6 +146,17 @@ class ShifterUrls
                 break;
             case 'home_url':
                 $value = trailingslashit(home_url('/'));
+                break;
+            case 'home_urls':
+                $value = [
+                    'home' => $this->get_home_url(),
+                ];
+                break;
+            case 'feed_urls':
+                $value = $this->_get_feed_urls();
+                break;
+            case 'front_page_posts':
+                $value = $this->_get_front_page_posts();
                 break;
             case 'current_url':
                 $value = home_url($this->get('request_path'));
@@ -303,7 +256,7 @@ class ShifterUrls
      * 
      * @return integer post id
      */
-    private function _get_postid_from_url($request_path)
+    protected function _get_postid_from_url($request_path)
     {
         $request_path  = preg_replace(
             '#^https?://[^/]+/#',
@@ -361,24 +314,18 @@ class ShifterUrls
      *
      * @return array
      */
-    private function _get_urls_all()
+    protected function _get_urls_all()
     {
         $urls = $this->_default_urls_array();
 
-        // top page & feed links
+        // top page
         if (!$this->_check_skip('top')) {
-            $this->_top_page_urls($urls);
-            // Front pagenate links
-            if (!$this->_check_skip('top_pagenate')) {
-                query_posts('');
-                if ('posts' === get_option('show_on_front')) {
-                    $this->_pagenate_urls($urls);
-                } else {
-                    $this->_pagenate_urls_page_on_front($urls);
-                    $this->_pagenate_urls_page_for_posts($urls);
-                }
-                wp_reset_query();
-            }
+            $this->_top_page_urls($urls, $this->_check_skip('top_pagenate'));
+        }
+
+        // feed links
+        if (!$this->_check_skip('feed')) {
+            $this->_feed_urls($urls);
         }
 
         // posts links
@@ -475,14 +422,14 @@ class ShifterUrls
      * 
      * @return array
      */
-    private function _get_paginates($base_url, $total_posts)
+    static public function get_paginates($base_url, $total_posts)
     {
         $urls = [];
-        $pages_per_page = $this->get('pages_per_page');
-        if ($pages_per_page === 0) {
+        $posts_per_page = get_option('posts_per_page');
+        if ($posts_per_page === 0) {
             return $urls;
         }
-        $num_of_pages = ceil(intval($total_posts) / $pages_per_page);
+        $num_of_pages = ceil(intval($total_posts) / $posts_per_page);
         $pagenate_links = paginate_links(
             [
                 'base'     => "{$base_url}%_%",
@@ -612,7 +559,7 @@ class ShifterUrls
      * 
      * @return array
      */
-    private function _urls_item($link_type, $post_type='', $link='', $redirect_action=null, $redirect_code=null)
+    protected function _urls_item($link_type, $post_type='', $link='', $redirect_action=null, $redirect_code=null)
     {
         $item = [
             'link_type' => $link_type,
@@ -738,7 +685,8 @@ class ShifterUrls
      * 
      * @return string
      */
-    private function _add_urls(&$urls=array(), $new_urls=array(), $link_type='', $post_type='', $redirect_action=null, $redirect_code=null){
+    private function _add_urls(&$urls=array(), $new_urls=array(), $link_type='', $post_type='', $redirect_action=null, $redirect_code=null)
+    {
         if ($this->_check_final()) {
             return self::FINAL;
         }
@@ -748,7 +696,7 @@ class ShifterUrls
                 $new_url = home_url($new_url);
             }
             $path = preg_replace('#^https?://[^/]+/#', '/', $new_url);
-            if ('home' == $link_type || '404' == $link_type || $this->_check_link_format($new_url)) {
+            if ('home' === $link_type || '404' === $link_type || $this->_check_link_format($new_url)) {
                 if ($this->_check_range()) {
                     $url_item = $this->_urls_item(
                         (string)$link_type,
@@ -788,6 +736,20 @@ class ShifterUrls
         return self::NOT_FINAL;
     }
 
+    protected function _get_permalink($post_id,$post_type,$amp_permalink=false)
+    {
+        $amp_permalink = $amp_permalink && function_exists('amp_get_permalink');
+        $key = __METHOD__."-{$post_type}-permalink-{$post_id}".($amp_permalink ? '-amp' : '');
+        if (false === ($permalink = $this->_get_transient($key))) {
+            $permalink = 
+                !$amp_permalink
+                ? get_permalink($post_id)
+                : amp_get_permalink($post_id);
+            $this->_set_transient($key, $permalink);
+        }
+        return $permalink;
+    }
+
     /**
      * Get top page URLs
      *
@@ -795,18 +757,14 @@ class ShifterUrls
      * 
      * @return string
      */
-    private function _top_page_urls(&$urls = array())
+    protected function _top_page_urls(&$urls = array(), $skip_top_pagenate=false)
     {
         if (self::FINAL === $this->_urls_init($urls)) {
             return self::FINAL;
         }
 
-        // home, 404
-        $home_url = $this->get('home_url');
-        $home_urls = [
-            'home' => $home_url,
-            '404'  => $home_url.self::PATH_404_HTML,
-        ];
+        // home
+        $home_urls = $this->get('home_urls');
         foreach ($home_urls as $url_type => $url) {
             $added = $this->_add_urls(
                 $urls,
@@ -817,29 +775,87 @@ class ShifterUrls
             if (self::FINAL === $added) {
                 break;
             }
+
+            // Front pagenate links
+            if (!$skip_top_pagenate) {
+                query_posts('');
+                if ('posts' === $this->get('show_on_front')) {
+                    $this->_pagenate_urls($urls, $url);
+                } else {
+                    $this->_pagenate_urls_page_on_front($urls, $url);
+                    $this->_pagenate_urls_page_for_posts($urls, $url);
+                }
+                wp_reset_query();
+            }
         }
 
+        // 404
+        $home_urls['404'] = $this->get('home_url').self::PATH_404_HTML;
+        $added = $this->_add_urls(
+            $urls,
+            (array)$home_urls['404'],
+            (string)'404',
+            ''
+        );
+
+        $this->set('urls', $urls);
+        return $this->_check_final() ? self::FINAL : self::NOT_FINAL;
+    }
+
+    protected function _feed_urls(&$urls = array())
+    {
         // feed
-        if (!$this->_check_final() && !$this->_check_skip('feed')) {
-            foreach ($this->get_feed_types() as $feed_type) {
-                $feed_link = trailingslashit(get_bloginfo($feed_type));
-                if (!$this->_check_link_format($feed_link)) {
-                    continue;
+        if (!$this->_check_final()) {
+            foreach ($this->get('feed_urls') as $feed_type => $feed_link) {
+                if ($this->_check_link_format($feed_link)) {
+                    $added = $this->_add_urls(
+                        $urls,
+                        (array)$feed_link,
+                        'feed',
+                        $feed_type
+                    );
                 }
-                $added = $this->_add_urls(
-                    $urls,
-                    (array)$feed_link,
-                    'feed',
-                    $feed_type
-                );
                 if (self::FINAL === $added) {
                     break;
                 }
             }
         }
-
         $this->set('urls', $urls);
         return $this->_check_final() ? self::FINAL : self::NOT_FINAL;
+    }
+
+    /**
+     * Get Feed URLs
+     *
+     * @return array
+     */
+    protected function _get_feed_urls()
+    {
+        $feed_urls = [];
+        foreach ($this->get_feed_types() as $feed_type) {
+            $feed_link = trailingslashit(get_bloginfo($feed_type));
+            $feed_urls[$feed_type] = $feed_link;
+        }
+        return $feed_urls;
+    }
+
+    protected function _get_posts($post_type)
+    {
+        global $wpdb;
+
+        $sql =
+            "SELECT ID,post_type,post_content".
+            " FROM {$wpdb->posts}".
+            " WHERE post_type=%s AND post_status=%s".
+            " ORDER BY post_date DESC"
+            ;
+        $sql = $wpdb->prepare(
+            $sql,
+            $post_type,
+            $post_type !== 'attachment' ? 'publish' : 'inherit'
+        );
+        $posts = $wpdb->get_results($sql, OBJECT);
+        return $posts;
     }
 
     /**
@@ -849,10 +865,8 @@ class ShifterUrls
      * 
      * @return string
      */
-    private function _posts_urls(&$urls = array())
+    protected function _posts_urls(&$urls = array())
     {
-        global $wpdb;
-
         if (self::FINAL === $this->_urls_init($urls)) {
             return self::FINAL;
         }
@@ -864,31 +878,15 @@ class ShifterUrls
 
             $key = __METHOD__."-{$post_type}";
             if (false === ($posts = $this->_get_transient($key))) {
-                $sql =
-                    "SELECT ID".
-                    " FROM {$wpdb->posts}".
-                    " WHERE post_type=%s AND post_status=%s".
-                    " ORDER BY post_date DESC"
-                    ;
-                $sql = $wpdb->prepare(
-                    $sql,
-                    $post_type,
-                    $post_type !== 'attachment' ? 'publish' : 'inherit'
-                );
-                $posts = $wpdb->get_results($sql, OBJECT);
+                $posts = $this->_get_posts($post_type);
                 $this->_set_transient($key, $posts);
             }
 
             foreach ($posts as $post) {
-                $key = __METHOD__."-{$post_type}-permalink-{$post->ID}";
-                if (false === ($permalink = $this->_get_transient($key))) {
-                    $permalink = get_permalink($post->ID);
-                    $this->_set_transient($key, $permalink);
-                }
-                $pagenate_format = '%#%/';
+                $permalink = $this->_get_permalink($post->ID, $post_type);
                 if (trailingslashit($permalink) !== trailingslashit($this->get('home_url'))) {
                     if (!$this->_check_link_format($permalink)) {
-                        continue;
+                        return $this->_check_final() ? self::FINAL : self::NOT_FINAL;
                     }
                     $added = $this->_add_urls(
                         $urls,
@@ -899,37 +897,14 @@ class ShifterUrls
                     if (self::FINAL === $added) {
                         break;
                     }
-                } else {
-                    $pagenate_format = 'page/%#%/';
                 }
-
+    
                 // has <!--nexpage--> ?
-                $key = __METHOD__."-{$post_type}-permalink-{$post->ID}-nextpages";
-                if (false === ($pg_matches = $this->_get_transient($key))) {
-                    $post_content = get_post_field('post_content', $post->ID, 'raw');
-                    $pcount = mb_substr_count($post_content, '<!--nextpage-->');
-                    $pagenate_links = paginate_links(
-                        [
-                            'base'     => "{$permalink}%_%",
-                            'format'   => $pagenate_format,
-                            'total'    => $pcount + 1,
-                            'show_all' => true,
-                        ]
-                    );
-                    $pg_matches = [];
-                    if (preg_match_all('/class=["\']page-numbers["\'][\s]+href=["\']([^"\']*)["\']/', $pagenate_links, $matches, PREG_SET_ORDER)) {
-                        foreach ($matches as $match) {
-                            $pg_matches[] = self::link_normalize($match[1]);
-                        }
-                    }
-                    unset($matches);
-                    $this->_set_transient($key, $pg_matches);
-                }
-
-                if (!empty($pg_matches)) {
+                $pagenate_links = $this->_has_pages($post, $permalink);
+                if (!empty($pagenate_links)) {
                     $added = $this->_add_urls(
                         $urls,
-                        (array)$pg_matches,
+                        (array)$pagenate_links,
                         'paginate_link',
                         $post_type
                     );
@@ -937,35 +912,34 @@ class ShifterUrls
                         break;
                     }
                 }
-                unset($pg_matches);
+                unset($pagenate_links);
 
                 // Detect Automattic AMP
-                if (function_exists('amp_get_permalink') && class_exists('AMP_Options_Manager')) {
-                    if ($this->_check_skip('amp')) {
+                if (!$this->_check_skip('amp') && class_exists('AMP_Options_Manager')) {
+                    // Force ignnore page.
+                    if ($post_type === 'page') {
                         continue;
                     }
-                    // Force ignnore page.
-                    if ($post_type !== 'page') {
-                        // supported_post_types is empty until first saved the setting.
-                        $amp_supported =
-                            AMP_Options_Manager::get_option('supported_post_types')
-                            ? AMP_Options_Manager::get_option('supported_post_types')
-                            : ['post'];
-                        // Skip password_protected or other known errors.
-                        $support_errors_codes = AMP_Post_Type_Support::get_support_errors($post->ID);
-                        if (!sizeof($support_errors_codes) > 0) {
-                            if (in_array($post_type, (array)$amp_supported)) {
-                                if (post_supports_amp($post)) {
-                                    $amp_permalink = amp_get_permalink($post->ID);
-                                    $added = $this->_add_urls(
-                                        $urls,
-                                        (array)$amp_permalink,
-                                        'amphtml',
-                                        $post_type
-                                    );
-                                    if (self::FINAL === $added) {
-                                        break;
-                                    }
+
+                    // supported_post_types is empty until first saved the setting.
+                    $amp_supported =
+                        AMP_Options_Manager::get_option('supported_post_types')
+                        ? AMP_Options_Manager::get_option('supported_post_types')
+                        : ['post'];
+                    // Skip password_protected or other known errors.
+                    $support_errors_codes = AMP_Post_Type_Support::get_support_errors($post->ID);
+                    if (!sizeof($support_errors_codes) > 0) {
+                        if (in_array($post_type, (array)$amp_supported)) {
+                            if (post_supports_amp($post)) {
+                                $amp_permalink = $this->_get_permalink($post->ID, $post_type, true);
+                                $added = $this->_add_urls(
+                                    $urls,
+                                    [$amp_permalink],
+                                    'amphtml',
+                                    $post_type
+                                );
+                                if (self::FINAL === $added) {
+                                    break;
                                 }
                             }
                         }
@@ -979,6 +953,16 @@ class ShifterUrls
         return $this->_check_final() ? self::FINAL : self::NOT_FINAL;
     }
 
+    protected function _get_post_type_archive_link($post_type)
+    {
+        $key = __METHOD__."-{$post_type}";
+        if (false === ($post_type_archive_link = $this->_get_transient($key))) {
+            $post_type_archive_link = get_post_type_archive_link($post_type);
+            $this->_set_transient($key, $post_type_archive_link);
+        }
+        return $post_type_archive_link;
+    }
+
     /**
      * Get post archive URLs
      *
@@ -986,10 +970,8 @@ class ShifterUrls
      * 
      * @return string
      */
-    private function _post_type_archive_urls(&$urls = array())
+    protected function _post_type_archive_urls(&$urls = array())
     {
-        global $wpdb;
-
         if (self::FINAL === $this->_urls_init($urls)) {
             return self::FINAL;
         }
@@ -999,11 +981,7 @@ class ShifterUrls
                 continue;
             }
 
-            $key = __METHOD__."-{$post_type}";
-            if (false === ($post_type_archive_link = $this->_get_transient($key))) {
-                $post_type_archive_link = get_post_type_archive_link($post_type);
-                $this->_set_transient($key, $post_type_archive_link);
-            }
+            $post_type_archive_link = $this->_get_post_type_archive_link($post_type);
             if (!$this->_check_link_format($post_type_archive_link)) {
                 continue;
             }
@@ -1020,18 +998,8 @@ class ShifterUrls
             // pagenate links
             $key = __METHOD__."-{$post_type}-pagenate";
             if (false === ($pagenate_urls = $this->_get_transient($key))) {
-                $sql =
-                    "SELECT ID".
-                    " FROM {$wpdb->posts}".
-                    " WHERE post_type=%s AND post_status=%s"
-                    ;
-                $sql = $wpdb->prepare(
-                    $sql,
-                    $post_type,
-                    $post_type !== 'attachment' ? 'publish' : 'inherit'
-                );
-                $posts = $wpdb->get_results($sql, OBJECT);
-                $pagenate_urls = $this->_get_paginates($post_type_archive_link, count($posts));
+                $posts = $this->_get_posts($post_type);
+                $pagenate_urls = self::get_paginates($post_type_archive_link, count($posts));
                 $this->_set_transient($key, $pagenate_urls);
                 unset($posts);
             }
@@ -1055,47 +1023,11 @@ class ShifterUrls
      * Get term_taxonomy slugs
      *
      * @param integer   $term_taxonomy_id
-     * 
-     * @return array
-     */
-    private function _get_term_taxonomy_slugs($term_taxonomy_id)
-    {
-        global $wpdb;
-
-        $slugs = [];
-        $sql =
-            "SELECT tt.term_taxonomy_id,t.slug".
-            " FROM {$wpdb->terms} AS t".
-            " INNER JOIN {$wpdb->term_taxonomy} AS tt ON t.term_id = tt.term_id".
-            " WHERE tt.term_taxonomy_id=%d"
-            ;
-        $sql = $wpdb->prepare(
-            $sql,
-            $term_taxonomy_id
-        );
-        $results = $wpdb->get_results($sql, ARRAY_N);
-        if (!is_wp_error($results) && !empty($results)) {
-            foreach ($results as $term_taxonomy) {
-                $slugs[$term_taxonomy[0]] = $term_taxonomy[1];
-                $slugs = $this->_get_term_taxonomy_children(
-                    $term_taxonomy[0],
-                    $slugs
-                );
-            }
-        }
-        unset($results);
-        return $slugs;
-    }
-
-    /**
-     * Get term_taxonomy slugs
-     *
-     * @param integer   $term_taxonomy_id
      * @param array     $slugs
      * 
      * @return array
      */
-    private function _get_term_taxonomy_children($term_taxonomy_id, $slugs = [])
+    protected function _get_term_taxonomy_children($term_taxonomy_id, $slugs = [])
     {
         global $wpdb;
 
@@ -1123,6 +1055,77 @@ class ShifterUrls
         return $slugs;
     }
 
+    protected function _get_object_taxonomies($post_type)
+    {
+        return get_object_taxonomies($post_type);
+    }
+
+    protected function _get_terms($taxonomy_name, $arg='')
+    {
+        return get_terms($taxonomy_name, $arg);
+    }
+
+    protected function _get_term_link($term)
+    {
+        return get_term_link($term);
+    }
+
+    protected function _get_posts_from_term($term, $slugs, $post_type)
+    {
+        $posts = get_posts(
+            [
+                'tax_query' =>
+                [
+                    [
+                        'taxonomy' => $term->taxonomy,
+                        'field'    => 'slug',
+                        'terms'    => $slugs,
+                    ]
+                ],
+                'post_type' => $post_type,
+                'post_status' => 'publish',
+                'posts_per_page' => -1
+            ]
+        );
+        return $posts;
+    }
+
+    /**
+     * Get term_taxonomy slugs
+     *
+     * @param integer   $term_taxonomy_id
+     * 
+     * @return array
+     */
+    protected function _get_term_taxonomy_slugs($term)
+    {
+        global $wpdb;
+
+        $slugs = [];
+        $sql =
+            "SELECT tt.term_taxonomy_id,t.slug".
+            " FROM {$wpdb->terms} AS t".
+            " INNER JOIN {$wpdb->term_taxonomy} AS tt ON t.term_id = tt.term_id".
+            " WHERE tt.term_taxonomy_id=%d"
+            ;
+        $sql = $wpdb->prepare(
+            $sql,
+            $term->term_taxonomy_id
+        );
+        $results = $wpdb->get_results($sql, ARRAY_N);
+        if (!is_wp_error($results) && !empty($results)) {
+            foreach ($results as $term_taxonomy) {
+                $slugs[$term_taxonomy[0]] = $term_taxonomy[1];
+                $slugs = $this->_get_term_taxonomy_children(
+                    $term_taxonomy[0],
+                    $slugs
+                );
+            }
+        }
+        unset($results);
+        return $slugs;
+    }
+
     /**
      * Get term archive URLs
      *
@@ -1130,7 +1133,7 @@ class ShifterUrls
      * 
      * @return string
      */
-    private function _post_type_term_urls(&$urls = array())
+    protected function _post_type_term_urls(&$urls = array())
     {
         if (self::FINAL === $this->_urls_init($urls)) {
             return self::FINAL;
@@ -1143,7 +1146,7 @@ class ShifterUrls
 
             $key = __METHOD__."-{$post_type}";
             if (false === ($taxonomy_names = $this->_get_transient($key))) {
-                $taxonomy_names = get_object_taxonomies($post_type);
+                $taxonomy_names = $this->_get_object_taxonomies($post_type);
                 $this->_set_transient($key, $taxonomy_names);
             }
             foreach ($taxonomy_names as $taxonomy_name) {
@@ -1152,12 +1155,12 @@ class ShifterUrls
                 }
                 $key = __METHOD__."-{$post_type}-{$taxonomy_name}";
                 if (false === ($terms = $this->_get_transient($key)) ) {
-                    $terms = get_terms($taxonomy_name, 'orderby=count&hide_empty=1');
+                    $terms = $this->_get_terms($taxonomy_name, 'orderby=count&hide_empty=1');
                     $this->_set_transient($key, $terms);
                 }
 
                 foreach ($terms as $term) {
-                    $termlink = get_term_link($term);
+                    $termlink = $this->_get_term_link($term);
                     if (!$this->_check_link_format($termlink)) {
                         continue;
                     }
@@ -1175,24 +1178,10 @@ class ShifterUrls
                     $key = __METHOD__."-{$term->term_taxonomy_id}-pagenate";
                     if (false === ($pagenate_urls = $this->_get_transient($key))) {
                         $pagenate_urls = [];
-                        $slugs = $this->_get_term_taxonomy_slugs($term->term_taxonomy_id);
+                        $slugs = $this->_get_term_taxonomy_slugs($term);
                         if (!empty($slugs)) {
-                            $posts = get_posts(
-                                [
-                                    'tax_query' =>
-                                    [
-                                        [
-                                            'taxonomy' => $term->taxonomy,
-                                            'field'    => 'slug',
-                                            'terms'    => $slugs,
-                                        ]
-                                    ],
-                                    'post_type' => $post_type,
-                                    'post_status' => 'publish',
-                                    'posts_per_page' => -1
-                                ]
-                            );
-                            $pagenate_urls = $this->_get_paginates($termlink, count($posts));
+                            $posts = $this->_get_posts_from_term($term, $slugs, $post_type);
+                            $pagenate_urls = self::get_paginates($termlink, count($posts));
                             unset($posts);
                         }
                         unset($slugs);
@@ -1217,6 +1206,34 @@ class ShifterUrls
         return $this->_check_final() ? self::FINAL : self::NOT_FINAL;
     }
 
+    protected function _get_archive_lists($archive_type)
+    {
+        $archives_lists = wp_get_archives(
+            [
+                'type'   => $archive_type,
+                'format' => 'none',
+                'echo'   => 0,
+                'show_post_count' => true
+            ]
+        );
+        preg_match_all('/href=["\']([^"\']*)["\'].+\((\d+)\)/', $archives_lists, $matches, PREG_SET_ORDER);
+        $archives_lists = [];
+        foreach ((array)$matches as $match) {
+            $archive_link = self::link_normalize($match[1]);
+            $archives_lists[] = $archive_link;
+            if (intval($match[2]) > $this->get_pages_per_page()) {
+                $pagenate_urls = self::get_paginates($archive_link, intval($match[2]));
+                foreach ($pagenate_urls as $pagenate_url) {
+                    if ($pagenate_url !== $archive_link) {
+                        $archives_lists[] = $pagenate_url;
+                    }
+                }
+            }
+        }
+        unset($matches);
+        return $archives_lists;
+    }
+
     /**
      * Get archive URLs
      *
@@ -1224,7 +1241,7 @@ class ShifterUrls
      * 
      * @return string
      */
-    private function _archive_urls(&$urls = array())
+    protected function _archive_urls(&$urls = array())
     {
         if (self::FINAL === $this->_urls_init($urls)) {
             return $this->_check_final() ? self::FINAL : self::NOT_FINAL;
@@ -1237,29 +1254,7 @@ class ShifterUrls
 
             $key = __METHOD__."-{$archive_type}";
             if (false === ($archives_lists = $this->_get_transient($key))) {
-                $archives_lists = wp_get_archives(
-                    [
-                        'type'   => $archive_type,
-                        'format' => 'none',
-                        'echo'   => 0,
-                        'show_post_count' => true
-                    ]
-                );
-                preg_match_all('/href=["\']([^"\']*)["\'].+\((\d+)\)/', $archives_lists, $matches, PREG_SET_ORDER);
-                $archives_lists = [];
-                foreach ((array)$matches as $match) {
-                    $archive_link = self::link_normalize($match[1]);
-                    $archives_lists[] = $archive_link;
-                    if (intval($match[2]) > $this->get_pages_per_page()) {
-                        $pagenate_urls = $this->_get_paginates($archive_link, intval($match[2]));
-                        foreach ($pagenate_urls as $pagenate_url) {
-                            if ($pagenate_url !== $archive_link) {
-                                $archives_lists[] = $pagenate_url;
-                            }
-                        }
-                    }
-                }
-                unset($matches);
+                $archives_lists = $this->_get_archive_lists($archive_type);
                 $this->_set_transient($key, $archives_lists);
             }
             $added = $this->_add_urls(
@@ -1286,19 +1281,17 @@ class ShifterUrls
      * 
      * @return string
      */
-    private function _pagenate_urls(&$urls = array(), $request_uri='/')
+    protected function _get_pagenate_urls($request_uri='/')
     {
-        if (self::FINAL === $this->_urls_init($urls)) {
-            return self::FINAL;
-        }
+        $paginate_links = [];
 
         $request_uri = preg_replace('#https?://[^/]+/#', '/', $request_uri);
         if (preg_match('#/page/[0-9]+/$#', $request_uri)) {
-            return $this->_check_final() ? self::FINAL : self::NOT_FINAL;
+            return [];
         }
         $current_page = max(1, get_query_var('paged'));
         if ($current_page > 1) {
-            return $this->_check_final() ? self::FINAL : self::NOT_FINAL;
+            return [];
         }
 
         $key = __METHOD__."-{$request_uri}";
@@ -1316,6 +1309,25 @@ class ShifterUrls
             unset($matches);
             $this->_set_transient($key, $paginate_links);
         }
+        return $paginate_links;
+    }
+
+    protected function _pagenate_urls(&$urls = array(), $request_uri='/')
+    {
+        if (self::FINAL === $this->_urls_init($urls)) {
+            return self::FINAL;
+        }
+
+        $request_uri = preg_replace('#https?://[^/]+/#', '/', $request_uri);
+        if (preg_match('#/page/[0-9]+/$#', $request_uri)) {
+            return $this->_check_final() ? self::FINAL : self::NOT_FINAL;
+        }
+        $current_page = max(1, get_query_var('paged'));
+        if ($current_page > 1) {
+            return $this->_check_final() ? self::FINAL : self::NOT_FINAL;
+        }
+
+        $paginate_links = $this->_get_pagenate_urls(trailingslashit(home_url($request_uri)));
         $added = $this->_add_urls(
             $urls,
             (array)$paginate_links,
@@ -1328,60 +1340,16 @@ class ShifterUrls
         return $this->_check_final() ? self::FINAL : self::NOT_FINAL;
     }
 
-    /**
-     * Get paginate URLs (Front page)
-     *
-     * @param array   $urls
-     * @param string  $request_uri
-     * 
-     * @return string
-     */
-    private function _pagenate_urls_page_on_front(&$urls = array(), $request_uri='/')
+    protected function _has_pages($post, $permalink)
     {
-        global $wpdb;
-
-        if (self::FINAL === $this->_urls_init($urls)) {
-            return self::FINAL;
-        }
-
-        $post_id = intval(get_option('page_on_front'));
-        if (!$post_id) {
-            return $this->_check_final() ? self::FINAL : self::NOT_FINAL;
-        }
-        $sql =
-            "SELECT ID,post_type,post_content".
-            " FROM {$wpdb->posts}".
-            " WHERE ID=%d"
-            ;
-        $sql = $wpdb->prepare(
-            $sql,
-            $post_id
-        );
-        $post = $wpdb->get_results($sql);
-
-        $permalink = get_permalink($post_id);
-        $pagenate_format = '%#%/';
-        if (trailingslashit($permalink) !== trailingslashit($this->get('home_url'))) {
-            if (!$this->_check_link_format($permalink)) {
-                return $this->_check_final() ? self::FINAL : self::NOT_FINAL;
-            }
-            $added = $this->_add_urls(
-                $urls,
-                (array)$permalink,
-                'permalink',
-                $post_type
-            );
-            if (self::FINAL === $added) {
-                $this->set('urls', $urls);
-                return $this->_check_final() ? self::FINAL : self::NOT_FINAL;
-            }
-        } else {
-            $pagenate_format = 'page/%#%/';
-        }
-
         // has <!--nexpage--> ?
-        $key = "posts_urls-{$post->post_type}-permalink-{$post->ID}-nextpages";
+        $key = __METHOD__."-{$post->post_type}-permalink-{$post->ID}-nextpages";
         if (false === ($pg_matches = $this->_get_transient($key))) {
+            $pagenate_format = '%#%/';
+            if (trailingslashit($permalink) === trailingslashit($this->get('home_url'))) {
+                $pagenate_format = 'page/%#%/';
+            }
+
             $pcount = mb_substr_count($post->post_content, '<!--nextpage-->');
             $pagenate_links = paginate_links(
                 [
@@ -1400,23 +1368,27 @@ class ShifterUrls
             unset($matches);
             $this->_set_transient($key, $pg_matches);
         }
+        return $pg_matches;
+    }
 
-        if (!empty($pg_matches)) {
-            $added = $this->_add_urls(
-                $urls,
-                (array)$pg_matches,
-                'paginate_link',
-                $post_type
-            );
-            if (self::FINAL === $added) {
-                $this->set('urls', $urls);
-                return $this->_check_final() ? self::FINAL : self::NOT_FINAL;
-            }
+    protected function _get_front_page_posts()
+    {
+        global $wpdb;
+        $post_id = intval($this->get('page_on_front'));
+        if (!$post_id) {
+            return [];
         }
-        unset($pg_matches);
-
-        $this->set('urls', $urls);
-        return $this->_check_final() ? self::FINAL : self::NOT_FINAL;
+        $sql =
+            "SELECT ID,post_type,post_content".
+            " FROM {$wpdb->posts}".
+            " WHERE ID=%d"
+            ;
+        $sql = $wpdb->prepare(
+            $sql,
+            $post_id
+        );
+        $post = $wpdb->get_results($sql);
+        return [$post];
     }
 
     /**
@@ -1427,46 +1399,120 @@ class ShifterUrls
      * 
      * @return string
      */
-    private function _pagenate_urls_page_for_posts(&$urls = array(), $request_uri='/')
+    protected function _pagenate_urls_page_on_front(&$urls = array(), $request_uri='/')
     {
-        global $wpdb;
-
         if (self::FINAL === $this->_urls_init($urls)) {
             return self::FINAL;
         }
 
-        $key = __METHOD__."-page_for_posts";
-        if (false === ($archives_lists = $this->_get_transient($key))) {
-            $archive_base = '/';
-            $post_id = intval(get_option('page_for_posts'));
-            if ($post_id) {
-                $sql =
-                    "SELECT ID,post_type".
-                    " FROM {$wpdb->posts}".
-                    " WHERE ID=%d"
-                    ;
-                $sql = $wpdb->prepare(
-                    $sql,
-                    $post_id
+        foreach ($this->get('front_page_posts') as $post) {
+            $permalink = $this->_get_permalink($post->ID, $post->post_type);
+            if (trailingslashit($permalink) !== trailingslashit($this->get('home_url'))) {
+                if (!$this->_check_link_format($permalink)) {
+                    return $this->_check_final() ? self::FINAL : self::NOT_FINAL;
+                }
+                $added = $this->_add_urls(
+                    $urls,
+                    (array)$permalink,
+                    'permalink',
+                    $post->post_type
                 );
-                $post = $wpdb->get_results($sql);
-                $permalink = get_permalink($post_id);
-                $archive_base = preg_replace('#https?://[^/]+/#', '/', $permalink);
+                if (self::FINAL === $added) {
+                    $this->set('urls', $urls);
+                    return $this->_check_final() ? self::FINAL : self::NOT_FINAL;
+                }
             }
 
+            // has <!--nexpage--> ?
+            $pagenate_links = $this->_has_pages($post, $permalink);
+            if (!empty($pagenate_links)) {
+                $added = $this->_add_urls(
+                    $urls,
+                    (array)$pagenate_links,
+                    'paginate_link',
+                    $post_type
+                );
+                $this->set('urls', $urls);
+                if (self::FINAL === $added) {
+                    return $this->_check_final() ? self::FINAL : self::NOT_FINAL;
+                }
+            }
+            unset($pagenate_links);
+
+            if ($this->_check_final()) {
+                return self::FINAL;
+            }
+        }
+        return self::NOT_FINAL;
+    }
+
+    protected function _posts_count_from_post_type($post_type)
+    {
+        global $wpdb;
+        $sql =
+            "SELECT count(*)".
+            " FROM {$wpdb->posts}".
+            " WHERE post_type=%s AND post_status=%s"
+            ;
+        $sql = $wpdb->prepare(
+            $sql,
+            $post_type,
+            'publish'
+        );
+        $posts_count = $wpdb->get_var($sql);
+        return $posts_count;
+    }
+
+    protected function _posts_count_from_author($author_name, $post_type='post')
+    {
+        global $wpdb;
+        $sql =
+            "SELECT count(*)".
+            " FROM {$wpdb->posts}".
+            " WHERE post_status=%s".
+            " AND post_type=%s".
+            " AND post_author =".
+            " (SELECT ID FROM {$wpdb->users} WHERE user_login=%s)"
+            ;
+        $sql = $wpdb->prepare(
+            $sql,
+            'publish',
+            $post_type,
+            $author_name
+        );
+        $posts_count = $wpdb->get_var($sql);
+        return $posts_count;
+    }
+
+    /**
+     * Get paginate URLs (Front page)
+     *
+     * @param array   $urls
+     * @param string  $request_uri
+     * 
+     * @return string
+     */
+    protected function _pagenate_urls_page_for_posts(&$urls = array(), $request_uri='/')
+    {
+        if (self::FINAL === $this->_urls_init($urls)) {
+            return self::FINAL;
+        }
+
+        $archive_base = '/';
+        $post_id = intval($this->get('page_for_posts'));
+        if (!$post_id) {
+            return self::NOT_FINAL;
+        }
+
+        $key = __METHOD__."-page_for_posts";
+        if (false === ($archives_lists = $this->_get_transient($key))) {
+            $post = get_post($post_id);
+            $permalink = $this->_get_permalink($post_id, $post->post_type);
+            $archive_base = preg_replace('#https?://[^/]+/#', '/', $permalink);
+
             $archives_lists = [$archive_base];
-            $sql =
-                "SELECT count(*)".
-                " FROM {$wpdb->posts}".
-                " WHERE post_type=%s AND post_status=%s"
-                ;
-            $sql = $wpdb->prepare(
-                $sql,
-                'post',
-                'publish'
-            );
-            $posts_count = $wpdb->get_var($sql);
-            $pagenate_urls = $this->_get_paginates($archive_base, $posts_count);
+            $posts_count = $this->_posts_count_from_post_type('post');
+            $pagenate_urls = self::get_paginates($archive_base, $posts_count);
             foreach ($pagenate_urls as $pagenate_url) {
                 $archives_lists[] = $pagenate_url;
             }
@@ -1484,6 +1530,34 @@ class ShifterUrls
         return $this->_check_final() ? self::FINAL : self::NOT_FINAL;
     }
 
+    protected function _get_authors_links()
+    {
+        $authors_links = [];
+        $args = [
+            'style' => 'none',
+            'echo' => false,
+            'exclude_admin' => false,
+        ];
+        preg_match_all(
+            '/href=["\']([^"\']*)["\']/',
+            wp_list_authors($args),
+            $matches,
+            PREG_SET_ORDER
+        );
+        foreach ((array)$matches as $match) {
+            $authors_link = self::link_normalize($match[1]);
+            $authors_links[] = $authors_link;
+            $author_name = preg_replace('#^.*/([^/]+)/?$#', '$1', $authors_link);
+            $post_count = $this->_posts_count_from_author($author_name);
+            $pagenate_urls = self::get_paginates($authors_link, $post_count);
+            foreach ($pagenate_urls as $pagenate_url) {
+                $authors_links[] = $pagenate_url;
+            }
+        }
+        unset($matches);
+        return $authors_links;
+    }
+
     /**
      * Get author archive URLs
      *
@@ -1491,51 +1565,17 @@ class ShifterUrls
      * 
      * @return string
      */
-    private function _authors_urls(&$urls = array())
+    protected function _authors_urls(&$urls = array())
     {
-        global $wpdb;
-
         if (self::FINAL === $this->_urls_init($urls)) {
             return self::FINAL;
-        }
-        if ($this->_check_skip('author')) {
-            return $this->_check_final() ? self::FINAL : self::NOT_FINAL;
+        } else if ($this->_check_skip('author')) {
+            return self::NOT_FINAL;
         }
 
         $key = __METHOD__;
         if (false === ($authors_links = $this->_get_transient($key))) {
-            preg_match_all(
-                '/href=["\']([^"\']*)["\']/',
-                wp_list_authors(['style'=>'none', 'echo'=>false, 'exclude_admin'=>false]),
-                $matches,
-                PREG_SET_ORDER
-            );
-            $authors_links = [];
-            foreach ((array)$matches as $match) {
-                $authors_link = self::link_normalize($match[1]);
-                $authors_links[] = $authors_link;
-                $author_name = preg_replace('#^.*/([^/]+)/?$#', '$1', $authors_link);
-                $sql =
-                    "SELECT count(*)".
-                    " FROM {$wpdb->posts}".
-                    " WHERE post_status=%s".
-                    " AND post_type=%s".
-                    " AND post_author =".
-                    " (SELECT ID FROM {$wpdb->users} WHERE user_login=%s)"
-                    ;
-                $sql = $wpdb->prepare(
-                    $sql,
-                    'publish',
-                    'post',
-                    $author_name
-                );
-                $posts_count = $wpdb->get_var($sql);
-                $pagenate_urls = $this->_get_paginates($authors_link, $posts_count);
-                foreach ($pagenate_urls as $pagenate_url) {
-                    $authors_links[] = $pagenate_url;
-                }
-            }
-            unset($matches);
+            $authors_links = $this->_get_authors_links();
             $this->_set_transient($key, $authors_links);
         }
         $added = $this->_add_urls(
@@ -1550,6 +1590,16 @@ class ShifterUrls
         return $this->_check_final() ? self::FINAL : self::NOT_FINAL;
     }
 
+    protected function _get_redirection_list()
+    {
+        $key = __METHOD__;
+        if (false === ($redirection_list = $this->_get_transient($key))) {
+            $redirection_list = class_exists('Red_Item') ? Red_Item::get_all() : [];
+            $this->_set_transient($key, $redirection_list);
+        }
+        return $redirection_list;
+    }
+
     /**
      * Get redirection URLs
      *
@@ -1557,25 +1607,15 @@ class ShifterUrls
      * 
      * @return string
      */
-    private function _redirection_urls(&$urls = array())
+    protected function _redirection_urls(&$urls = array())
     {
         if (self::FINAL === $this->_urls_init($urls)) {
             return self::FINAL;
-        }
-        if (!class_exists('Red_Item')) {
-            return $this->_check_final() ? self::FINAL : self::NOT_FINAL;
-        }
-        if ($this->_check_skip('redirection')) {
-            return $this->_check_final() ? self::FINAL : self::NOT_FINAL;
+        } else if ($this->_check_skip('redirection')) {
+            return self::NOT_FINAL;
         }
 
-        $key = __METHOD__;
-        if (false === ($redirection_list = $this->_get_transient($key))) {
-            $redirection_list = Red_Item::get_all();
-            $this->_set_transient($key, $redirection_list);
-        }
-
-        foreach ( $redirection_list as $redirection ) {
+        foreach ($this->_get_redirection_list() as $redirection) {
             if (!$redirection->is_enabled() || $redirection->is_regex()) {
                 continue;
             }
@@ -1635,7 +1675,8 @@ class ShifterUrls
      * 
      * @return string
      */
-    private function _singlepage_pagenate_urls(&$urls = array(), $request_path='/') {
+    protected function _singlepage_pagenate_urls(&$urls = array(), $request_path='/')
+    {
         if (self::FINAL === $this->_urls_init($urls)) {
             return self::FINAL;
         }
@@ -1650,7 +1691,7 @@ class ShifterUrls
         $post = get_post($post_id);
         setup_postdata($post);
 
-        $permalink = get_permalink($post_id);
+        $permalink = $this->_get_permalink($post_id, $post->post_type);
         $permalink_path = preg_replace('#https?://[^/]+/#', '/', $permalink);
         $current_page = 1;
         if ($permalink_path !== $request_path) {
