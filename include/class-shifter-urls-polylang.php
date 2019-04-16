@@ -94,9 +94,9 @@ class ShifterUrlsPolylang extends ShifterUrlsBase
         return $item;
     }
 
-    protected function _get_permalink($post_id,$amp_permalink=false)
+    protected function _get_permalink($post_id, $post_type, $amp_permalink=false)
     {
-        $permalink = parent::_get_permalink($post_id,$amp_permalink);
+        $permalink = parent::_get_permalink($post_id, $post_type, $amp_permalink);
         self::$current_language = pll_get_post_language($post_id);
         return $permalink;
     }
