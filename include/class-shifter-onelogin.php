@@ -1,9 +1,13 @@
 <?php
+if (!defined('ABSPATH')) {
+	exit; // don't access directly
+};
+
 class ShifterOneLogin
 {
     static $instance;
 
-    const REST_ENDPOINT = 'shifter/v1';
+    const REST_ENDPOINT = SHIFTER_REST_ENDPOINT;
     const REST_PATH     = '/user';
 
     const ENV_TOKEN     = 'SHIFTER_LOGIN_TOKEN';
