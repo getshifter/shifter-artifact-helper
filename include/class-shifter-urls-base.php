@@ -29,8 +29,6 @@ class ShifterUrlsBase
 
     /**
      * Constructor
-     *
-     * @return nothing
      */
     public function __construct()
     {
@@ -39,7 +37,7 @@ class ShifterUrlsBase
     /**
      * Get self instance
      *
-     * @return object
+     * @return \ShifterUrlsBase
      */
     public static function get_instance()
     {
@@ -56,8 +54,8 @@ class ShifterUrlsBase
      *
      * @param string $name method name
      * @param array  $args argments
-     * 
-     * @return array|string
+     *
+     * @return array|string|boolean
      * @throws BadMethodCallException
      */
     public function __call($name, $args)
@@ -82,9 +80,7 @@ class ShifterUrlsBase
      * Magic method
      *
      * @param string $key
-     * @param array|strnig $value
-     * 
-     * @return nothing
+     * @param array|string $value
      */
     public function __set($key, $value)
     {
@@ -95,9 +91,9 @@ class ShifterUrlsBase
      * Get values
      *
      * @param string $key
-     * @param array|strnig $default
+     * @param array|string $default
      * 
-     * @return array|strnig
+     * @return array|string
      */
     public function get($key, $default=null)
     {
@@ -217,15 +213,13 @@ class ShifterUrlsBase
      * Set values
      *
      * @param string $key
-     * @param array|strnig $value
-     * 
-     * @return nothing
+     * @param array|string|integer $value
      */
     private function set($key, $value)
     {
         $this->_var[$key] = $value;
         if ('start' === $key && $value === 0) {
-            $this->_paths(null, true);
+            $this->_paths([], true);
         }
     }
 
@@ -234,8 +228,6 @@ class ShifterUrlsBase
      *
      * @param string $key
      * @param integer $inc
-     * 
-     * @return nothing
      */
     private function increment($key, $inc=1)
     {
@@ -276,7 +268,7 @@ class ShifterUrlsBase
      *
      * @param string  $request_path
      * @param boolean $rest_request
-     * 
+     *
      * @return string
      */
     public function current_url_type($request_path=null, $rest_request=false)
@@ -359,7 +351,7 @@ class ShifterUrlsBase
         $urls['count'] = count($urls['items']);
         $urls['finished'] = $urls['count'] < $this->get_limit();
         if ($urls['finished']) {
-            $this->_paths(null, true);
+            $this->_paths([], true);
         }
         return $urls;
     }
@@ -471,9 +463,9 @@ class ShifterUrlsBase
     /**
      * Is range?
      *
-     * @param integer $url_count
-     * @param integer $start_position
-     * @param integer $end_position
+     * @param integer|boolean $url_count
+     * @param integer|boolean $start_position
+     * @param integer|boolean $end_position
      * 
      * @return boolean
      */
@@ -497,9 +489,9 @@ class ShifterUrlsBase
     /**
      * Is final?
      *
-     * @param integer $url_count
-     * @param integer $end_position
-     * 
+     * @param integer|boolean $url_count
+     * @param integer|boolean $end_position
+     *
      * @return boolean
      */
     private function _check_final($url_count=false, $end_position=false)
@@ -579,10 +571,10 @@ class ShifterUrlsBase
     /**
      * Get transient cache
      *
-     * @param string  $transient_key
-     * @param string|array  $default
-     * 
-     * @return string|array
+     * @param string                $transient_key
+     * @param string|array|boolean  $default
+     *
+     * @return string|array|boolean
      */
     private function _get_transient($transient_key, $default=false)
     {
@@ -595,7 +587,7 @@ class ShifterUrlsBase
      * Set transient cache
      *
      * @param string  $transient_key
-     * @param string|array  $value
+     * @param string|array|integer  $value
      * 
      * @return boolean
      */
@@ -605,7 +597,7 @@ class ShifterUrlsBase
         return set_transient(
             $transient_key,
             $value,
-            $this->get('transient_expires')
+            intval($this->get('transient_expires'))
         );
     }
 
@@ -682,8 +674,8 @@ class ShifterUrlsBase
      * @param string  $post_type
      * @param string  $redirect_action
      * @param integer $redirect_code
-     * 
-     * @return string
+     *
+     * @return integer
      */
     private function _add_urls(&$urls=array(), $new_urls=array(), $link_type='', $post_type='', $redirect_action=null, $redirect_code=null)
     {
@@ -710,7 +702,6 @@ class ShifterUrlsBase
                 }
                 if ($this->_check_final()) {
                     return self::FINAL;
-                    break;
                 }
                 $this->increment('url_count');
             }
@@ -724,7 +715,7 @@ class ShifterUrlsBase
      *
      * @param array   $urls
      * 
-     * @return string
+     * @return integer
      */
     private function _urls_init(&$urls = array()){
         if (empty($urls)) {
@@ -754,8 +745,8 @@ class ShifterUrlsBase
      * Get top page URLs
      *
      * @param array   $urls
-     * 
-     * @return string
+     *
+     * @return integer
      */
     protected function _top_page_urls(&$urls = array(), $skip_top_pagenate=false)
     {
@@ -804,6 +795,7 @@ class ShifterUrlsBase
 
     protected function _feed_urls(&$urls = array())
     {
+        $added = null;
         // feed
         if (!$this->_check_final()) {
             foreach ($this->get('feed_urls') as $feed_type => $feed_link) {
@@ -862,8 +854,8 @@ class ShifterUrlsBase
      * Get post parmalink URLs
      *
      * @param array   $urls
-     * 
-     * @return string
+     *
+     * @return integer
      */
     protected function _posts_urls(&$urls = array())
     {
@@ -967,8 +959,8 @@ class ShifterUrlsBase
      * Get post archive URLs
      *
      * @param array   $urls
-     * 
-     * @return string
+     *
+     * @return integer
      */
     protected function _post_type_archive_urls(&$urls = array())
     {
@@ -1093,8 +1085,8 @@ class ShifterUrlsBase
     /**
      * Get term_taxonomy slugs
      *
-     * @param integer   $term_taxonomy_id
-     * 
+     * @param \WP_Term  $term
+     *
      * @return array
      */
     protected function _get_term_taxonomy_slugs($term)
@@ -1131,7 +1123,7 @@ class ShifterUrlsBase
      *
      * @param array   $urls
      * 
-     * @return string
+     * @return integer
      */
     protected function _post_type_term_urls(&$urls = array())
     {
@@ -1239,7 +1231,7 @@ class ShifterUrlsBase
      *
      * @param array   $urls
      * 
-     * @return string
+     * @return integer
      */
     protected function _archive_urls(&$urls = array())
     {
@@ -1276,10 +1268,9 @@ class ShifterUrlsBase
     /**
      * Get paginate URLs
      *
-     * @param array   $urls
      * @param string  $request_uri
-     * 
-     * @return string
+     *
+     * @return array
      */
     protected function _get_pagenate_urls($request_uri='/')
     {
@@ -1396,8 +1387,8 @@ class ShifterUrlsBase
      *
      * @param array   $urls
      * @param string  $request_uri
-     * 
-     * @return string
+     *
+     * @return integer
      */
     protected function _pagenate_urls_page_on_front(&$urls = array(), $request_uri='/')
     {
@@ -1430,7 +1421,7 @@ class ShifterUrlsBase
                     $urls,
                     (array)$pagenate_links,
                     'paginate_link',
-                    $post_type
+                    $post->post_type
                 );
                 $this->set('urls', $urls);
                 if (self::FINAL === $added) {
@@ -1489,8 +1480,8 @@ class ShifterUrlsBase
      *
      * @param array   $urls
      * @param string  $request_uri
-     * 
-     * @return string
+     *
+     * @return integer
      */
     protected function _pagenate_urls_page_for_posts(&$urls = array(), $request_uri='/')
     {
@@ -1562,8 +1553,8 @@ class ShifterUrlsBase
      * Get author archive URLs
      *
      * @param array   $urls
-     * 
-     * @return string
+     *
+     * @return integer
      */
     protected function _authors_urls(&$urls = array())
     {
@@ -1603,9 +1594,9 @@ class ShifterUrlsBase
     /**
      * Get redirection URLs
      *
-     * @param array   $urls
-     * 
-     * @return string
+     * @param array $urls
+     *
+     * @return integer
      */
     protected function _redirection_urls(&$urls = array())
     {
@@ -1670,10 +1661,10 @@ class ShifterUrlsBase
     /**
      * Get singlepage pagenate URLs
      *
-     * @param array   $urls
-     * @param single  $request_path
+     * @param array  $urls
+     * @param string $request_path
      * 
-     * @return string
+     * @return integer
      */
     protected function _singlepage_pagenate_urls(&$urls = array(), $request_path='/')
     {
@@ -1726,7 +1717,7 @@ class ShifterUrlsBase
                     $urls,
                     (array)$paginate_link,
                     'paginate_link',
-                    $post_type ? $post_type : ''
+                    $post->post_type ? $post->post_type : ''
                 );
                 if (self::FINAL === $added) {
                     break;

@@ -18,8 +18,6 @@ add_action(
 
 /**
  * Callback function for admin menu
- *
- * @return nothing
  */
 function shifter_add_settings_menu()
 {
@@ -39,8 +37,6 @@ function shifter_add_settings_menu()
 
 /**
  * Callback function for option values
- *
- * @return nothing
  */
 function shifter_register_settings()
 {
@@ -56,8 +52,6 @@ function shifter_register_settings()
 
 /**
  * Callback function for setting box
- *
- * @return nothing
  */
 function shifter_settings_page()
 {

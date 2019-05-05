@@ -16,8 +16,6 @@ class ShifterOneLogin
 
     /**
      * Constructor
-     *
-     * @return nothing
      */
     private function __construct()
     {

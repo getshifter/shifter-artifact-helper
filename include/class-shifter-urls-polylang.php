@@ -6,7 +6,7 @@ class ShifterUrlsPolylang extends ShifterUrlsBase
 
     public function __construct()
     {
-        return parent::__construct();
+        parent::__construct();
     }
 
     public static function get_instance()
@@ -26,9 +26,9 @@ class ShifterUrlsPolylang extends ShifterUrlsBase
      * Get values
      *
      * @param string $key
-     * @param array|strnig $default
-     * 
-     * @return array|strnig
+     * @param array|string $default
+     *
+     * @return array|string
      */
     public function get($key, $default=null)
     {
