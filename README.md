@@ -5,7 +5,7 @@
 Artifact helper tool for Shifter –  Serverless WordPress Hosting
 
 
-## Integrataion test
+## Integration test
 
 Sandbox
 
