@@ -747,6 +747,7 @@ class ShifterUrlsBase
                 : amp_get_permalink($post_id);
             $this->_set_transient($key, $permalink);
         }
+        $permalink = preg_replace('/#[^#]*$/', '', $permalink);
         return $permalink;
     }
 
