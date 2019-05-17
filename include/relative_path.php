@@ -20,6 +20,7 @@ add_action(
         add_filter(
             'upload_dir',
             function ($uploads) {
+                /** @var string[] */
                 $parsed_url  = parse_url(home_url());
                 $host_name   = $parsed_url['host'];
                 $server_name = $host_name . (isset($parsed_url['port']) ? ':'.$parsed_url['port'] : '');
