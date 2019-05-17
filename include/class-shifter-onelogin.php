@@ -1,8 +1,4 @@
 <?php
-if (!defined('ABSPATH')) {
-	exit; // don't access directly
-};
-
 class ShifterOneLogin
 {
     static $instance;
