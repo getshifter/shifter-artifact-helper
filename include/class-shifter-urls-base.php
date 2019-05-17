@@ -879,7 +879,7 @@ class ShifterUrlsBase
                 $permalink = $this->_get_permalink($post->ID, $post_type);
                 if (trailingslashit($permalink) !== trailingslashit($this->get('home_url'))) {
                     if (!$this->_check_link_format($permalink)) {
-                        return $this->_check_final() ? self::FINAL : self::NOT_FINAL;
+                        continue;
                     }
                     $added = $this->_add_urls(
                         $urls,
@@ -892,6 +892,11 @@ class ShifterUrlsBase
                     }
                 }
     
+                // Force ignnore attachment.
+                if ($post_type === 'attachment') {
+                    continue;
+                }
+
                 // has <!--nexpage--> ?
                 $pagenate_links = $this->_has_pages($post, $permalink);
                 if (!empty($pagenate_links)) {
@@ -907,13 +912,13 @@ class ShifterUrlsBase
                 }
                 unset($pagenate_links);
 
+                // Force ignnore page.
+                if ($post_type === 'page') {
+                    continue;
+                }
+
                 // Detect Automattic AMP
                 if (!$this->_check_skip('amp') && class_exists('AMP_Options_Manager')) {
-                    // Force ignnore page.
-                    if ($post_type === 'page') {
-                        continue;
-                    }
-
                     // supported_post_types is empty until first saved the setting.
                     $amp_supported =
                         AMP_Options_Manager::get_option('supported_post_types')
