@@ -1469,7 +1469,7 @@ class ShifterUrlsBase
             " WHERE post_status=%s".
             " AND post_type=%s".
             " AND post_author =".
-            " (SELECT ID FROM {$wpdb->users} WHERE user_login=%s)"
+            " (SELECT ID FROM {$wpdb->users} WHERE user_nicename = %s)"
             ;
         $sql = $wpdb->prepare(
             $sql,
@@ -1478,6 +1478,16 @@ class ShifterUrlsBase
             $author_name
         );
         $posts_count = $wpdb->get_var($sql);
+        if (!$posts_count) {
+            $sql = str_replace('user_nicename','user_login',$sql);
+            $sql = $wpdb->prepare(
+                $sql,
+                'publish',
+                $post_type,
+                $author_name
+            );
+            $posts_count = $wpdb->get_var($sql);
+        }
         return $posts_count;
     }
 
@@ -1529,7 +1539,7 @@ class ShifterUrlsBase
 
     protected function _get_authors_links()
     {
-        $authors_links = [];
+        $author_links = [];
         $args = [
             'style' => 'none',
             'echo' => false,
@@ -1542,17 +1552,17 @@ class ShifterUrlsBase
             PREG_SET_ORDER
         );
         foreach ((array)$matches as $match) {
-            $authors_link = self::link_normalize($match[1]);
-            $authors_links[] = $authors_link;
-            $author_name = preg_replace('#^.*/([^/]+)/?$#', '$1', $authors_link);
+            $author_link = self::link_normalize($match[1]);
+            $author_links[] = $author_link;
+            $author_name = preg_replace('#^.*/([^/]+)/?$#', '$1', $author_link);
             $post_count = $this->_posts_count_from_author($author_name);
-            $pagenate_urls = self::get_paginates($authors_link, $post_count);
+            $pagenate_urls = self::get_paginates($author_link, $post_count);
             foreach ($pagenate_urls as $pagenate_url) {
-                $authors_links[] = $pagenate_url;
+                $author_links[] = $pagenate_url;
             }
         }
         unset($matches);
-        return $authors_links;
+        return $author_links;
     }
 
     /**
