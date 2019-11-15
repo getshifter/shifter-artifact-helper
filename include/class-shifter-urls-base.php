@@ -92,7 +92,7 @@ class ShifterUrlsBase
      *
      * @param string $key
      * @param array|string $default
-     * 
+     *
      * @return array|string
      */
     public function get($key, $default=null)
@@ -245,7 +245,7 @@ class ShifterUrlsBase
      * Get post ID from URL
      *
      * @param string $request_path
-     * 
+     *
      * @return integer post id
      */
     protected function _get_postid_from_url($request_path)
@@ -411,7 +411,7 @@ class ShifterUrlsBase
      *
      * @param string  $base_url
      * @param integer $total_posts
-     * 
+     *
      * @return array
      */
     static public function get_paginates($base_url, $total_posts)
@@ -466,7 +466,7 @@ class ShifterUrlsBase
      * @param integer|boolean $url_count
      * @param integer|boolean $start_position
      * @param integer|boolean $end_position
-     * 
+     *
      * @return boolean
      */
     private function _check_range($url_count=false, $start_position=false, $end_position=false)
@@ -481,7 +481,7 @@ class ShifterUrlsBase
             $end_position = $this->get('end');
         }
         return (
-            $url_count >= $start_position && 
+            $url_count >= $start_position &&
             !$this->_check_final($url_count, $end_position)
         );
     }
@@ -509,7 +509,7 @@ class ShifterUrlsBase
      * Is skip?
      *
      * @param string $key
-     * 
+     *
      * @return boolean
      */
     private function _check_skip($key)
@@ -526,7 +526,7 @@ class ShifterUrlsBase
      * Is correct link?
      *
      * @param string $link
-     * 
+     *
      * @return boolean
      */
     private function _check_link_format($link)
@@ -548,7 +548,7 @@ class ShifterUrlsBase
      * @param string  $link
      * @param string  $redirect_action
      * @param integer $redirect_code
-     * 
+     *
      * @return array
      */
     protected function _urls_item($link_type, $post_type='', $link='', $redirect_action=null, $redirect_code=null)
@@ -588,7 +588,7 @@ class ShifterUrlsBase
      *
      * @param string  $transient_key
      * @param string|array|integer  $value
-     * 
+     *
      * @return boolean
      */
     private function _set_transient($transient_key, $value)
@@ -605,7 +605,7 @@ class ShifterUrlsBase
      * Delete transient cache
      *
      * @param string  $transient_key
-     * 
+     *
      * @return boolean
      */
     private function _delete_transient($transient_key)
@@ -618,7 +618,7 @@ class ShifterUrlsBase
      * Normalize link value
      *
      * @param string  $link
-     * 
+     *
      * @return string
      */
     static public function link_normalize($link, $remove_index_html = false)
@@ -644,7 +644,7 @@ class ShifterUrlsBase
      *
      * @param array  $paths_new
      * @param boolean  $init
-     * 
+     *
      * @return array
      */
     private function _paths($paths_new=[],$init=false)
@@ -714,7 +714,7 @@ class ShifterUrlsBase
      * Init URLs array
      *
      * @param array   $urls
-     * 
+     *
      * @return integer
      */
     private function _urls_init(&$urls = array()){
@@ -732,7 +732,7 @@ class ShifterUrlsBase
         $amp_permalink = $amp_permalink && function_exists('amp_get_permalink');
         $key = __METHOD__."-{$post_type}-permalink-{$post_id}".($amp_permalink ? '-amp' : '');
         if (false === ($permalink = $this->_get_transient($key))) {
-            $permalink = 
+            $permalink =
                 !$amp_permalink
                 ? get_permalink($post_id)
                 : amp_get_permalink($post_id);
@@ -891,31 +891,25 @@ class ShifterUrlsBase
                         break;
                     }
                 }
-    
+
                 // Force ignnore attachment.
-                if ($post_type === 'attachment') {
-                    continue;
-                }
-
-                // has <!--nexpage--> ?
-                $pagenate_links = $this->_has_pages($post, $permalink);
-                if (!empty($pagenate_links)) {
-                    $added = $this->_add_urls(
-                        $urls,
-                        (array)$pagenate_links,
-                        'paginate_link',
-                        $post_type
-                    );
-                    if (self::FINAL === $added) {
-                        break;
+                if ($post_type !== 'attachment') {
+                    // has <!--nexpage--> ?
+                    $pagenate_links = $this->_has_pages($post, $permalink);
+                    if (!empty($pagenate_links)) {
+                        $added = $this->_add_urls(
+                            $urls,
+                            (array)$pagenate_links,
+                            'paginate_link',
+                            $post_type
+                        );
+                        if (self::FINAL === $added) {
+                            break;
+                        }
                     }
+                    unset($pagenate_links);
                 }
-                unset($pagenate_links);
 
-                // Force ignnore page.
-                if ($post_type === 'page') {
-                    continue;
-                }
 
                 // Detect Automattic AMP
                 if (!$this->_check_skip('amp') && class_exists('AMP_Options_Manager')) {
@@ -1022,7 +1016,7 @@ class ShifterUrlsBase
      *
      * @param integer   $term_taxonomy_id
      * @param array     $slugs
-     * 
+     *
      * @return array
      */
     protected function _get_term_taxonomy_children($term_taxonomy_id, $slugs = [])
@@ -1128,7 +1122,7 @@ class ShifterUrlsBase
      * Get term archive URLs
      *
      * @param array   $urls
-     * 
+     *
      * @return integer
      */
     protected function _post_type_term_urls(&$urls = array())
@@ -1236,7 +1230,7 @@ class ShifterUrlsBase
      * Get archive URLs
      *
      * @param array   $urls
-     * 
+     *
      * @return integer
      */
     protected function _archive_urls(&$urls = array())
@@ -1679,7 +1673,7 @@ class ShifterUrlsBase
      *
      * @param array  $urls
      * @param string $request_path
-     * 
+     *
      * @return integer
      */
     protected function _singlepage_pagenate_urls(&$urls = array(), $request_path='/')
