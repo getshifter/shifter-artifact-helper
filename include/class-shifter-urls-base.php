@@ -887,6 +887,12 @@ class ShifterUrlsBase
                         'permalink',
                         $post_type
                     );
+                    $this->_add_urls(
+                        $urls,
+                        (array)$embed_url,
+                        'embed',
+                        $post_type
+                    );
                     if (self::FINAL === $added) {
                         break;
                     }
