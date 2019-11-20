@@ -1173,6 +1173,29 @@ class ShifterUrlsBase
                         break;
                     }
 
+                    // feed
+                    if (!$this->_check_skip('feed')) {
+                        foreach ($this->get('feed_urls') as $feed_type => $feed_link) {
+                            $feed_link = str_replace(
+                                trailingslashit(home_url()),
+                                '/',
+                                trailingslashit($feed_link)
+                            );
+                            $feed_link = untrailingslashit($termlink).$feed_link;
+                            if ($this->_check_link_format($feed_link)) {
+                                $added = $this->_add_urls(
+                                    $urls,
+                                    (array)$feed_link,
+                                    'term_feed',
+                                    $term->slug
+                                );
+                            }
+                            if (self::FINAL === $added) {
+                                break;
+                            }
+                        }
+                    }
+
                     // pagenate links
                     $key = __METHOD__."-{$term->term_taxonomy_id}-pagenate";
                     if (false === ($pagenate_urls = $this->_get_transient($key))) {
