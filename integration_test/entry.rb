@@ -80,12 +80,12 @@ class TestRootPath < Test::Unit::TestCase
 
 
   description '/?urls=11&max=100 and ?page12&limit=100'
-  items = get_urls(path: '/', urls: 12)
+  items = get_urls(path: '/', urls: 11)
 
   data(
     'all_counts' => [items['count'], 66],
-    'start' => [items['start'], 1200],
-    'end' => [items['end'], 1300],
+    'start' => [items['start'], 1100],
+    'end' => [items['end'], 1200],
     'finished' => [items['finished'], true],
   )
 
@@ -95,11 +95,11 @@ class TestRootPath < Test::Unit::TestCase
   end
 
   # for rest-api
-  items = get_urls_wprest(path: '/', page: 13)
+  items = get_urls_wprest(path: '/', page: 12)
   data(
     'all_counts' => [items['count'], 66],
-    'start' => [items['start'], 1200],
-    'end' => [items['end'], 1300],
+    'start' => [items['start'], 1100],
+    'end' => [items['end'], 1200],
     'finished' => [items['finished'], true],
   )
 
