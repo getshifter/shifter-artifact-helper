@@ -887,13 +887,15 @@ class ShifterUrlsBase
                         'permalink',
                         $post_type
                     );
-                    $embed_url = get_post_embed_url($post->ID);
-                    $this->_add_urls(
-                        $urls,
-                        (array)$embed_url,
-                        'embed',
-                        $post_type
-                    );
+                    if (!$this->_check_skip('embed')) {
+                        $embed_url = get_post_embed_url($post->ID);
+                        $this->_add_urls(
+                            $urls,
+                            (array)$embed_url,
+                            'embed',
+                            $post_type
+                        );
+                    }
                     if (self::FINAL === $added) {
                         break;
                     }
