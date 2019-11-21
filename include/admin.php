@@ -48,6 +48,7 @@ function shifter_register_settings()
     register_setting('shifter-options', 'shifter_skip_tag');
     register_setting('shifter-options', 'shifter_skip_author');
     register_setting('shifter-options', 'shifter_skip_feed');
+    register_setting('shifter-options', 'shifter_skip_embed');
 }
 
 /**
@@ -64,6 +65,7 @@ function shifter_settings_page()
         "shifter_skip_tag"        => "tag archives",
         "shifter_skip_author"     => "author archives",
         "shifter_skip_feed"       => "feeds",
+        "shifter_skip_embed"      => "embeds",
     ];
 ?>
 
