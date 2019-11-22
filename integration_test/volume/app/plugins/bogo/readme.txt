@@ -3,7 +3,7 @@ Contributors: takayukister
 Tags: multilingual, localization, language, locale, admin
 Requires at least: 4.9
 Tested up to: 4.9
-Stable tag: 3.2
+Stable tag: 3.2.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 Donate link: https://pledgie.com/campaigns/17860
@@ -60,6 +60,10 @@ Here are some technical details for those interested. Bogo plugin assigns [one l
 1. In the Language Packs screen, you can install and manage language packs.
 
 == Changelog ==
+
+= 3.2.1 =
+
+* Recalculates values in some WP query parameters in bogo_parse_query().
 
 = 3.2 =
 

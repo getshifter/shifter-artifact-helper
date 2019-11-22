@@ -29,35 +29,36 @@ class AMP_Content {
 	 *
 	 * @var array
 	 */
-	private $amp_scripts = array();
+	private $amp_scripts = [];
 
 	/**
-	 * AMP styles.
+	 * AMP stylesheets.
 	 *
+	 * @since 1.0
 	 * @var array
 	 */
-	private $amp_styles = array();
+	private $amp_stylesheets = [];
 
 	/**
 	 * Args.
 	 *
 	 * @var array
 	 */
-	private $args = array();
+	private $args;
 
 	/**
-	 * Embed handler class names.
+	 * Embed handlers.
 	 *
-	 * @var string[]
+	 * @var AMP_Base_Embed_Handler[] AMP_Base_Embed_Handler[]
 	 */
-	private $embed_handler_classes = array();
+	private $embed_handlers;
 
 	/**
 	 * Sanitizer class names.
 	 *
 	 * @var string[]
 	 */
-	private $sanitizer_classes = array();
+	private $sanitizer_classes;
 
 	/**
 	 * AMP_Content constructor.
@@ -67,11 +68,13 @@ class AMP_Content {
 	 * @param string[] $sanitizer_classes     Sanitizer class names.
 	 * @param array    $args                  Args.
 	 */
-	public function __construct( $content, $embed_handler_classes, $sanitizer_classes, $args = array() ) {
-		$this->content               = $content;
-		$this->args                  = $args;
-		$this->embed_handler_classes = $embed_handler_classes;
-		$this->sanitizer_classes     = $sanitizer_classes;
+	public function __construct( $content, $embed_handler_classes, $sanitizer_classes, $args = [] ) {
+		$this->content           = $content;
+		$this->args              = $args;
+		$this->embed_handlers    = $this->register_embed_handlers( $embed_handler_classes );
+		$this->sanitizer_classes = $sanitizer_classes;
+
+		$this->sanitizer_classes['AMP_Embed_Sanitizer']['embed_handlers'] = $this->embed_handlers;
 
 		$this->transform();
 	}
@@ -97,10 +100,22 @@ class AMP_Content {
 	/**
 	 * Get AMP styles.
 	 *
-	 * @return array
+	 * @deprecated Since 1.0 in favor of the get_amp_stylesheets method.
+	 * @return array Empty list.
 	 */
 	public function get_amp_styles() {
-		return $this->amp_styles;
+		_deprecated_function( __METHOD__, '1.0', __CLASS__ . '::get_amp_stylesheets' );
+		return [];
+	}
+
+	/**
+	 * Get AMP styles.
+	 *
+	 * @since 1.0
+	 * @return array
+	 */
+	public function get_amp_stylesheets() {
+		return $this->amp_stylesheets;
 	}
 
 	/**
@@ -110,9 +125,8 @@ class AMP_Content {
 		$content = $this->content;
 
 		// First, embeds + the_content filter.
-		$embed_handlers = $this->register_embed_handlers();
-		$content        = apply_filters( 'the_content', $content );
-		$this->unregister_embed_handlers( $embed_handlers );
+		$content = apply_filters( 'the_content', $content );
+		$this->unregister_embed_handlers( $this->embed_handlers );
 
 		// Then, sanitize to strip and/or convert non-amp content.
 		$content = $this->sanitize( $content );
@@ -130,28 +144,40 @@ class AMP_Content {
 	}
 
 	/**
-	 * Add styles.
+	 * Add stylesheets.
 	 *
-	 * @param array $styles Styles.
+	 * @since 1.0
+	 * @param array $stylesheets Styles.
 	 */
-	private function add_styles( $styles ) {
-		$this->amp_styles = array_merge( $this->amp_styles, $styles );
+	private function add_stylesheets( $stylesheets ) {
+		$this->amp_stylesheets = array_merge( $this->amp_stylesheets, $stylesheets );
 	}
 
 	/**
 	 * Register embed handlers.
 	 *
+	 * @param string[] $embed_handler_classes Embed handler class names.
 	 * @return array
 	 */
-	private function register_embed_handlers() {
-		$embed_handlers = array();
+	private function register_embed_handlers( $embed_handler_classes ) {
+		$embed_handlers = [];
 
-		foreach ( $this->embed_handler_classes as $embed_handler_class => $args ) {
+		foreach ( $embed_handler_classes as $embed_handler_class => $args ) {
 			$embed_handler = new $embed_handler_class( array_merge( $this->args, $args ) );
 
-			if ( ! is_subclass_of( $embed_handler, 'AMP_Base_Embed_Handler' ) ) {
-				/* translators: %s is embed handler */
-				_doing_it_wrong( __METHOD__, esc_html( sprintf( __( 'Embed Handler (%s) must extend `AMP_Embed_Handler`', 'amp' ), $embed_handler_class ) ), '0.1' );
+			if ( ! $embed_handler instanceof AMP_Base_Embed_Handler ) {
+				_doing_it_wrong(
+					__METHOD__,
+					esc_html(
+						sprintf(
+							/* translators: 1: embed handler. 2: AMP_Embed_Handler */
+							__( 'Embed Handler (%1$s) must extend `%2$s`', 'amp' ),
+							esc_html( $embed_handler_class ),
+							'AMP_Embed_Handler'
+						)
+					),
+					'0.1'
+				);
 				continue;
 			}
 
@@ -179,14 +205,16 @@ class AMP_Content {
 	 *
 	 * @see AMP_Content_Sanitizer::sanitize()
 	 * @param string $content Content.
-	 * @return array Sanitized content.
+	 * @return string Sanitized content.
 	 */
 	private function sanitize( $content ) {
-		list( $sanitized_content, $scripts, $styles ) = AMP_Content_Sanitizer::sanitize( $content, $this->sanitizer_classes, $this->args );
+		$dom = AMP_DOM_Utils::get_dom_from_content( $content );
 
-		$this->add_scripts( $scripts );
-		$this->add_styles( $styles );
+		$results = AMP_Content_Sanitizer::sanitize_document( $dom, $this->sanitizer_classes, $this->args );
 
-		return $sanitized_content;
+		$this->add_scripts( $results['scripts'] );
+		$this->add_stylesheets( $results['stylesheets'] );
+
+		return AMP_DOM_Utils::get_content_from_dom( $dom );
 	}
 }

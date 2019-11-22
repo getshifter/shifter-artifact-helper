@@ -96,7 +96,7 @@ class AMP_Post_Template {
 		}
 
 		// Make sure we have a post, or bail if not.
-		if ( is_a( $this->post, 'WP_Post' ) ) {
+		if ( $this->post instanceof WP_Post ) {
 			$this->ID = $this->post->ID;
 		} else {
 			return;
@@ -108,7 +108,7 @@ class AMP_Post_Template {
 		}
 		$content_max_width = apply_filters( 'amp_content_max_width', $content_max_width );
 
-		$this->data = array(
+		$this->data = [
 			'content_max_width'     => $content_max_width,
 
 			'document_title'        => function_exists( 'wp_get_document_title' ) ? wp_get_document_title() : wp_title( '', false ), // Back-compat with 4.3.
@@ -116,7 +116,7 @@ class AMP_Post_Template {
 			'home_url'              => home_url( '/' ),
 			'blog_name'             => get_bloginfo( 'name' ),
 
-			'html_tag_attributes'   => array(),
+			'html_tag_attributes'   => [],
 			'body_class'            => '',
 
 			'site_icon_url'         => apply_filters( 'amp_site_icon_url', function_exists( 'get_site_icon_url' ) ? get_site_icon_url( self::SITE_ICON_SIZE ) : '' ),
@@ -127,18 +127,17 @@ class AMP_Post_Template {
 			'comments_link_text'    => false,
 
 			'amp_runtime_script'    => 'https://cdn.ampproject.org/v0.js',
-			'amp_component_scripts' => array(),
+			'amp_component_scripts' => [],
 
-			'customizer_settings'   => array(),
+			'customizer_settings'   => [],
 
-			'font_urls'             => array(
-				'merriweather' => 'https://fonts.googleapis.com/css?family=Merriweather:400,400italic,700,700italic',
-			),
+			'font_urls'             => [],
 
-			'post_amp_styles'       => array(),
+			'post_amp_stylesheets'  => [],
+			'post_amp_styles'       => [], // Deprecated.
 
 			'amp_analytics'         => amp_add_custom_analytics(),
-		);
+		];
 
 		$this->build_post_content();
 		$this->build_post_data();
@@ -167,10 +166,10 @@ class AMP_Post_Template {
 	public function get( $property, $default = null ) {
 		if ( isset( $this->data[ $property ] ) ) {
 			return $this->data[ $property ];
-		} else {
-			/* translators: %s is key name */
-			_doing_it_wrong( __METHOD__, esc_html( sprintf( __( 'Called for non-existent key ("%s").', 'amp' ), $property ) ), '0.1' );
 		}
+
+		/* translators: %s is key name */
+		_doing_it_wrong( __METHOD__, esc_html( sprintf( __( 'Called for non-existent key ("%s").', 'amp' ), $property ) ), '0.1' );
 
 		return $default;
 	}
@@ -197,7 +196,7 @@ class AMP_Post_Template {
 	public function load() {
 		global $wp_query;
 		$template = is_page() || $wp_query->is_posts_page ? 'page' : 'single';
-		$this->load_parts( array( $template ) );
+		$this->load_parts( [ $template ] );
 	}
 
 	/**
@@ -266,25 +265,33 @@ class AMP_Post_Template {
 		$post_modified_timestamp = get_post_modified_time( 'U', false, $this->post );
 		$post_author             = get_userdata( $this->post->post_author );
 
-		$this->add_data(
-			array(
-				'post'                    => $this->post,
-				'post_id'                 => $this->ID,
-				'post_title'              => $post_title,
-				'post_publish_timestamp'  => $post_publish_timestamp,
-				'post_modified_timestamp' => $post_modified_timestamp,
-				'post_author'             => $post_author,
-			)
-		);
+		$data = [
+			'post'                     => $this->post,
+			'post_id'                  => $this->ID,
+			'post_title'               => $post_title,
+			'post_publish_timestamp'   => $post_publish_timestamp,
+			'post_modified_timestamp'  => $post_modified_timestamp,
+			'post_author'              => $post_author,
+			'post_canonical_link_url'  => '',
+			'post_canonical_link_text' => '',
+		];
+
+		$customizer_settings = AMP_Customizer_Settings::get_settings();
+		if ( ! empty( $customizer_settings['display_exit_link'] ) ) {
+			$data['post_canonical_link_url']  = get_permalink( $this->ID );
+			$data['post_canonical_link_text'] = __( 'Exit Reader Mode', 'amp' );
+		}
+
+		$this->add_data( $data );
 
 		$this->build_post_featured_image();
-		$this->build_post_commments_data();
+		$this->build_post_comments_data();
 	}
 
 	/**
 	 * Buuild post comments data.
 	 */
-	private function build_post_commments_data() {
+	private function build_post_comments_data() {
 		if ( ! post_type_supports( $this->post->post_type, 'comments' ) ) {
 			return;
 		}
@@ -303,10 +310,10 @@ class AMP_Post_Template {
 			: __( 'View Comments', 'amp' );
 
 		$this->add_data(
-			array(
+			[
 				'comments_link_url'  => $comments_link_url,
 				'comments_link_text' => $comments_link_text,
-			)
+			]
 		);
 	}
 
@@ -318,14 +325,14 @@ class AMP_Post_Template {
 			$this->post->post_content,
 			amp_get_content_embed_handlers( $this->post ),
 			amp_get_content_sanitizers( $this->post ),
-			array(
+			[
 				'content_max_width' => $this->get( 'content_max_width' ),
-			)
+			]
 		);
 
 		$this->add_data_by_key( 'post_amp_content', $amp_content->get_amp_content() );
 		$this->merge_data_for_key( 'amp_component_scripts', $amp_content->get_amp_scripts() );
-		$this->merge_data_for_key( 'post_amp_styles', $amp_content->get_amp_styles() );
+		$this->add_data_by_key( 'post_amp_stylesheets', $amp_content->get_amp_stylesheets() );
 	}
 
 	/**
@@ -340,7 +347,11 @@ class AMP_Post_Template {
 			return;
 		}
 
-		$featured_id = get_post_thumbnail_id( $post_id );
+		$featured_id    = get_post_thumbnail_id( $post_id );
+		$featured_image = get_post( $featured_id );
+		if ( ! $featured_image ) {
+			return;
+		}
 
 		// If an image with the same ID as the featured image exists in the content, skip the featured image markup.
 		// Prevents duplicate images, which is especially problematic for photo blogs.
@@ -351,29 +362,31 @@ class AMP_Post_Template {
 			return;
 		}
 
-		$featured_image = get_post( $featured_id );
-
-		list( $sanitized_html, $featured_scripts, $featured_styles ) = AMP_Content_Sanitizer::sanitize(
-			$featured_html,
+		$dom    = AMP_DOM_Utils::get_dom_from_content( $featured_html );
+		$assets = AMP_Content_Sanitizer::sanitize_document(
+			$dom,
 			amp_get_content_sanitizers( $this->post ),
-			array(
+			[
 				'content_max_width' => $this->get( 'content_max_width' ),
-			)
+			]
 		);
+
+		$sanitized_html = AMP_DOM_Utils::get_content_from_dom( $dom );
 
 		$this->add_data_by_key(
-			'featured_image', array(
+			'featured_image',
+			[
 				'amp_html' => $sanitized_html,
 				'caption'  => $featured_image->post_excerpt,
-			)
+			]
 		);
 
-		if ( $featured_scripts ) {
-			$this->merge_data_for_key( 'amp_component_scripts', $featured_scripts );
+		if ( $assets['scripts'] ) {
+			$this->merge_data_for_key( 'amp_component_scripts', $assets['scripts'] );
 		}
 
-		if ( $featured_styles ) {
-			$this->merge_data_for_key( 'post_amp_styles', $featured_styles );
+		if ( $assets['stylesheets'] ) {
+			$this->merge_data_for_key( 'post_amp_stylesheets', $assets['stylesheets'] );
 		}
 	}
 
@@ -404,7 +417,7 @@ class AMP_Post_Template {
 	 * Build HTML tag attributes.
 	 */
 	private function build_html_tag_attributes() {
-		$attributes = array();
+		$attributes = [];
 
 		if ( function_exists( 'is_rtl' ) && is_rtl() ) {
 			$attributes['dir'] = 'rtl';
@@ -432,7 +445,7 @@ class AMP_Post_Template {
 
 		$file = apply_filters( 'amp_post_template_file', $file, $template_type, $this->post );
 		if ( ! $this->is_valid_template( $file ) ) {
-			/* translators: %1$s is template file, %2$s is 'WP_CONTENT_DIR' string. */
+			/* translators: 1: the template file, 2: WP_CONTENT_DIR. */
 			_doing_it_wrong( __METHOD__, sprintf( esc_html__( 'Path validation for template (%1$s) failed. Path cannot traverse and must be located in `%2$s`.', 'amp' ), esc_html( $file ), 'WP_CONTENT_DIR' ), '0.1' );
 			return;
 		}
@@ -449,7 +462,7 @@ class AMP_Post_Template {
 	 */
 	private function locate_template( $file ) {
 		$search_file = sprintf( 'amp/%s', basename( $file ) );
-		return locate_template( array( $search_file ), false );
+		return locate_template( [ $search_file ], false );
 	}
 
 	/**

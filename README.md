@@ -16,7 +16,7 @@ Sandbox
 
 ```
 $ docker pull getshifter/shifter_local:develop
-$ make pkg
+$ make prepare
 $ docker-compose build --no-cache
 $ docker-compose up
 ```
@@ -34,6 +34,7 @@ $ bundle exec ruby ./entry.rb
 ### update contents for wp
 
 ```
+$ make prepare
 $ docker-compose build --no-cache
 $ docker-compose up
 ```
