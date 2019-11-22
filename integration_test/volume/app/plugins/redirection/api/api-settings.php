@@ -13,19 +13,32 @@ class Redirection_Api_Settings extends Redirection_Api_Route {
 			include_once ABSPATH . '/wp-admin/includes/file.php';
 		}
 
-		return array(
+		return [
 			'settings' => red_get_options(),
 			'groups' => $this->groups_to_json( Red_Group::get_for_select() ),
 			'installed' => get_home_path(),
 			'canDelete' => ! is_multisite(),
 			'post_types' => red_get_post_types(),
-		);
+		];
 	}
 
 	public function route_save_settings( WP_REST_Request $request ) {
-		red_set_options( $request->get_params() );
+		$params = $request->get_params();
+		$result = true;
 
-		return $this->route_settings( $request );
+		if ( isset( $params['location'] ) && strlen( $params['location'] ) > 0 ) {
+			$module = Red_Module::get( 2 );
+			$result = $module->can_save( $params['location'] );
+		}
+
+		red_set_options( $params );
+
+		$settings = $this->route_settings( $request );
+		if ( is_wp_error( $result ) ) {
+			$settings['warning'] = $result->get_error_message();
+		}
+
+		return $settings;
 	}
 
 	private function groups_to_json( $groups, $depth = 0 ) {
@@ -33,9 +46,15 @@ class Redirection_Api_Settings extends Redirection_Api_Route {
 
 		foreach ( $groups as $text => $value ) {
 			if ( is_array( $value ) && $depth === 0 ) {
-				$items[] = (object)array( 'text' => $text, 'value' => $this->groups_to_json( $value, 1 ) );
+				$items[] = (object) array(
+					'label' => $text,
+					'value' => $this->groups_to_json( $value, 1 ),
+				);
 			} else {
-				$items[] = (object)array( 'text' => $value, 'value' => $text );
+				$items[] = (object) array(
+					'label' => $value,
+					'value' => $text,
+				);
 			}
 		}
 

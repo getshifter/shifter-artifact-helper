@@ -41,6 +41,17 @@ class AMP_Playbuzz_Sanitizer extends AMP_Base_Sanitizer {
 	private static $height = '500';
 
 	/**
+	 * Get mapping of HTML selectors to the AMP component selectors which they may be converted into.
+	 *
+	 * @return array Mapping.
+	 */
+	public function get_selector_conversion_mapping() {
+		return [
+			'div.pb_feed' => [ 'amp-playbuzz.pb_feed' ],
+		];
+	}
+
+	/**
 	 * Sanitize the Playbuzz elements from the HTML contained in this instance's DOMDocument.
 	 *
 	 * @since 0.2
@@ -97,7 +108,7 @@ class AMP_Playbuzz_Sanitizer extends AMP_Base_Sanitizer {
 	 * @return array Returns HTML attributes; removes any not specifically declared above from input.
 	 */
 	private function filter_attributes( $attributes ) {
-		$out = array();
+		$out = [];
 
 		foreach ( $attributes as $name => $value ) {
 			switch ( $name ) {
@@ -113,16 +124,14 @@ class AMP_Playbuzz_Sanitizer extends AMP_Base_Sanitizer {
 					}
 					break;
 
-				case 'data-game-info':
-					$out['data-item-info'] = $value;
-					break;
-
 				case 'data-shares':
 					$out['data-share-buttons'] = $value;
 					break;
 
+				case 'data-game-info':
 				case 'data-comments':
-					$out['data-comments'] = $value;
+				case 'class':
+					$out[ $name ] = $value;
 					break;
 
 				default:

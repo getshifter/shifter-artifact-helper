@@ -1,17 +1,44 @@
 <?php
+/**
+ * @api {get} /redirection/v1/log Get log logs
+ * @apiDescription Get log logs
+ * @apiGroup Log
+ *
+ * @apiParam {string} groupBy Group by 'ip' or 'url'
+ * @apiParam {string} orderby
+ * @apiParam {string} direction
+ * @apiParam {string} filterBy
+ * @apiParam {string} per_page
+ * @apiParam {string} page
+ */
 
+/**
+ * @api {post} /redirection/v1/log Delete log logs
+ * @apiDescription Delete log logs either by ID or filter or group
+ * @apiGroup Log
+ *
+ * @apiParam {string} items Array of log IDs
+ * @apiParam {string} filterBy
+ * @apiParam {string} groupBy Group by 'ip' or 'url'
+ */
+
+/**
+ * @api {post} /redirection/v1/bulk/log/delete Bulk actions on logs
+ * @apiDescription Delete log logs either by ID
+ * @apiGroup Log
+ */
 class Redirection_Api_Log extends Redirection_Api_Filter_Route {
 	public function __construct( $namespace ) {
-		$filters = array( 'url', 'ip', 'url-exact' );
-		$orders = array( 'url', 'ip' );
+		$orders = [ 'url', 'ip' ];
+		$filters = [ 'ip', 'url-exact', 'referrer', 'agent', 'url', 'target' ];
 
 		register_rest_route( $namespace, '/log', array(
-			'args' => $this->get_filter_args( $filters, $orders ),
+			'args' => $this->get_filter_args( $orders, $filters ),
 			$this->get_route( WP_REST_Server::READABLE, 'route_log' ),
 			$this->get_route( WP_REST_Server::EDITABLE, 'route_delete_all' ),
 		) );
 
-		$this->register_bulk( $namespace, '/bulk/log/(?P<bulk>delete)', $filters, $filters, 'route_bulk' );
+		$this->register_bulk( $namespace, '/bulk/log/(?P<bulk>delete)', $orders, 'route_bulk' );
 	}
 
 	public function route_log( WP_REST_Request $request ) {
@@ -32,18 +59,8 @@ class Redirection_Api_Log extends Redirection_Api_Filter_Route {
 
 	public function route_delete_all( WP_REST_Request $request ) {
 		$params = $request->get_params();
-		$filter = false;
-		$filterBy = false;
 
-		if ( isset( $params['filter'] ) ) {
-			$filter = $params['filter'];
-		}
-
-		if ( isset( $params['filterBy'] ) && in_array( $params['filterBy'], array( 'url', 'ip', 'url-exact' ), true ) ) {
-			$filterBy = $params['filterBy'];
-		}
-
-		RE_Log::delete_all( $filterBy, $filter );
+		RE_Log::delete_all( isset( $params['filterBy'] ) ? $params['filterBy'] : [] );
 		return $this->route_log( $request );
 	}
 

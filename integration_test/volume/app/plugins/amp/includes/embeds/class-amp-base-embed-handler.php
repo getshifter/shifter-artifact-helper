@@ -11,20 +11,57 @@
  * Class AMP_Base_Embed_Handler
  */
 abstract class AMP_Base_Embed_Handler {
+	/**
+	 * Default width.
+	 *
+	 * @var int
+	 */
 	protected $DEFAULT_WIDTH = 600;
+
+	/**
+	 * Default height.
+	 *
+	 * @var int
+	 */
 	protected $DEFAULT_HEIGHT = 480;
 
-	protected $args = array();
+	/**
+	 * Default arguments.
+	 *
+	 * @var array
+	 */
+	protected $args = [];
+
+	/**
+	 * Whether or not conversion was completed.
+	 *
+	 * @var boolean
+	 */
 	protected $did_convert_elements = false;
 
-	abstract function register_embed();
-	abstract function unregister_embed();
+	/**
+	 * Registers embed.
+	 */
+	abstract public function register_embed();
 
-	function __construct( $args = array() ) {
-		$this->args = wp_parse_args( $args, array(
-			'width' => $this->DEFAULT_WIDTH,
-			'height' => $this->DEFAULT_HEIGHT,
-		) );
+	/**
+	 * Unregisters embed.
+	 */
+	abstract public function unregister_embed();
+
+	/**
+	 * Constructor.
+	 *
+	 * @param array $args Height and width for embed.
+	 */
+	public function __construct( $args = [] ) {
+		$this->args = wp_parse_args(
+			$args,
+			[
+				'width'  => $this->DEFAULT_WIDTH,
+				'height' => $this->DEFAULT_HEIGHT,
+			]
+		);
 	}
 
 	/**
@@ -38,6 +75,6 @@ abstract class AMP_Base_Embed_Handler {
 	 * @return array Scripts.
 	 */
 	public function get_scripts() {
-		return array();
+		return [];
 	}
 }
