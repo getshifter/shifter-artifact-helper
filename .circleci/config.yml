@@ -34,6 +34,7 @@ jobs:
           name: warkaround bogo
           command: |
             docker-compose exec wp bash -c 'cd web/wp; sudo -u www-data wp plugin deactivate bogo'
+            docker-compose exec wp bash -c 'cd web/wp; sudo -u www-data wp cache flush'
             curl -sk "https://127.0.0.1:8443/?urls=0&max=10"
             docker-compose exec wp bash -c 'cd web/wp; sudo -u www-data wp plugin activate bogo'
       - run:
