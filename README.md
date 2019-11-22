@@ -34,6 +34,7 @@ $ bundle exec ruby ./entry.rb
 ### update contents for wp
 
 ```
+$ make prepare
 $ docker-compose build --no-cache
 $ docker-compose up
 ```
