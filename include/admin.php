@@ -85,7 +85,7 @@ function shifter_settings_page()
 <?php foreach ($options as $key => $title) { ?>
 <?php
         $default = '';
-        if ('shifter_skip_embed' === $key || 'shifter_skip_attachment' === $key) {
+        if (preg_match('/^shifter_skip_(embed|attachment)$/', $key)) {
             $default = 'yes';
         }
 ?>
