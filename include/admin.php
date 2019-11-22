@@ -83,10 +83,16 @@ function shifter_settings_page()
     <?php do_settings_sections('shifter-options'); ?>
     <table class="form-table">
 <?php foreach ($options as $key => $title) { ?>
+<?php
+        $default = '';
+        if (preg_match('/^shifter_skip_(embed|attachment)$/', $key)) {
+            $default = 'yes';
+        }
+?>
         <tr valign="top">
         <th scope="row"><?php echo ucfirst($title); ?></th>
         <td>
-            <input type="checkbox" name="<?php echo esc_attr($key); ?>" id="<?php echo esc_attr($key); ?>" value="yes" <?php echo get_option($key) === 'yes' ? 'checked ' : '' ; ?>/>
+            <input type="checkbox" name="<?php echo esc_attr($key); ?>" id="<?php echo esc_attr($key); ?>" value="yes" <?php echo get_option($key, $default) === 'yes' ? 'checked ' : '' ; ?>/>
             <label for="<?php echo esc_attr($key); ?>">Skip <?php echo $title; ?></label>
         </td>
         </tr>
