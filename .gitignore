@@ -60,3 +60,5 @@ build-iPhoneSimulator/
 /integration_test/volume/app/mu-plugins
 /integration_test/volume/app/upgrade
 /bin/
+
+/integration_test/volume/shifter-artifact-helper/
