@@ -512,9 +512,9 @@ class ShifterUrlsBase
      *
      * @return boolean
      */
-    private function _check_skip($key)
+    private function _check_skip($key, $default = '')
     {
-        $result = get_option('shifter_skip_'.$key) === 'yes';
+        $result = get_option('shifter_skip_'.$key, $default) === 'yes';
         $disables = $this->get('disables', []);
         if (in_array($key, $disables)) {
             $result = true;
@@ -865,7 +865,8 @@ class ShifterUrlsBase
         }
 
         foreach ($this->get_post_types() as $post_type) {
-            if ($this->_check_skip($post_type)) {
+            $default = 'attachment' !== $post_type ? '' : 'yes';
+            if ($this->_check_skip($post_type, $default)) {
                 continue;
             }
 
@@ -887,7 +888,7 @@ class ShifterUrlsBase
                         'permalink',
                         $post_type
                     );
-                    if (!$this->_check_skip('embed')) {
+                    if (!$this->_check_skip('embed', 'yes')) {
                         $embed_url = get_post_embed_url($post->ID);
                         $this->_add_urls(
                             $urls,
@@ -978,7 +979,8 @@ class ShifterUrlsBase
         }
 
         foreach ($this->get_post_types() as $post_type) {
-            if ($this->_check_skip($post_type)) {
+            $default = 'attachment' !== $post_type ? '' : 'yes';
+            if ($this->_check_skip($post_type, $default)) {
                 continue;
             }
 
@@ -1141,7 +1143,8 @@ class ShifterUrlsBase
         }
 
         foreach ($this->get_post_types() as $post_type) {
-            if ($this->_check_skip($post_type)) {
+            $default = 'attachment' !== $post_type ? '' : 'yes';
+            if ($this->_check_skip($post_type, $default)) {
                 continue;
             }
 
