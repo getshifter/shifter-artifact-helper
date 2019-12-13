@@ -1000,7 +1000,7 @@ class ShifterUrlsBase
                 }
     
                 // pagenate links
-                $key = __METHOD__."-{$post_type}-pagenate";
+                $key = __METHOD__."-{$post_type}-{$post_type_archive_link}";
                 if (false === ($pagenate_urls = $this->_get_transient($key))) {
                     $posts = $this->_get_posts($post_type);
                     $pagenate_urls = self::get_paginates($post_type_archive_link, count($posts));
