@@ -174,6 +174,7 @@ class ShifterUrlsPolylang extends ShifterUrlsBase
         return $term_link;
     }
 
+
     protected function _get_archive_lists($archive_type)
     {
         $default_language = pll_default_language();
@@ -316,6 +317,25 @@ class ShifterUrlsPolylang extends ShifterUrlsBase
             }
         }
         self::$current_language = $default_language;
+        return $urls;
+    }
+
+    protected function _get_post_type_archive_links($post_type)
+    {
+        $post_type_archive_link  = get_post_type_archive_link($post_type);
+        $urls = [$post_type => $post_type_archive_link];
+
+        $default_language = pll_default_language();
+        foreach (pll_languages_list() as $language) {
+            self::$current_language = $language;
+            if ($default_language === $language) {
+                continue;
+            }
+            $link = $this->_transform_polylang_url($post_type_archive_link, $language);
+            $urls["{$post_type}-{$language}"] = trailingslashit($link);
+        }
+        self::$current_language = $default_language;
+
         return $urls;
     }
 
