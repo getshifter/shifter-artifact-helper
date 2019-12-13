@@ -13,7 +13,7 @@ function shifter_get_urls($request_path=null, $rest_request=false)
         $request_path = trailingslashit($request_path);
     }
 
-    if (defined('POLYLANG_BASENAME')) {
+    if (defined('POLYLANG_BASENAME') || is_plugin_active('polylang/polylang.php')) {
         require_once __DIR__.'/class-shifter-urls-polylang.php';
         $shifter_urls = ShifterUrlsPolylang::get_instance();
     } else {

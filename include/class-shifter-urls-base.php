@@ -955,14 +955,14 @@ class ShifterUrlsBase
         return $this->_check_final() ? self::FINAL : self::NOT_FINAL;
     }
 
-    protected function _get_post_type_archive_link($post_type)
+    protected function _get_post_type_archive_links($post_type)
     {
         $key = __METHOD__."-{$post_type}";
-        if (false === ($post_type_archive_link = $this->_get_transient($key))) {
-            $post_type_archive_link = get_post_type_archive_link($post_type);
-            $this->_set_transient($key, $post_type_archive_link);
+        if (false === ($post_type_archive_links = $this->_get_transient($key))) {
+            $post_type_archive_links = [get_post_type_archive_link($post_type)];
+            $this->_set_transient($key, $post_type_archive_links);
         }
-        return $post_type_archive_link;
+        return $post_type_archive_links;
     }
 
     /**
@@ -984,38 +984,40 @@ class ShifterUrlsBase
                 continue;
             }
 
-            $post_type_archive_link = $this->_get_post_type_archive_link($post_type);
-            if (!$this->_check_link_format($post_type_archive_link)) {
-                continue;
+            $post_type_archive_links = $this->_get_post_type_archive_links($post_type);
+            foreach ($post_type_archive_links as $post_type_archive_link) {
+                if (!$this->_check_link_format($post_type_archive_link)) {
+                    continue;
+                }
+                $added = $this->_add_urls(
+                    $urls,
+                    (array)$post_type_archive_link,
+                    'post_type_archive_link',
+                    $post_type
+                );
+                if (self::FINAL === $added) {
+                    break;
+                }
+    
+                // pagenate links
+                $key = __METHOD__."-{$post_type}-{$post_type_archive_link}";
+                if (false === ($pagenate_urls = $this->_get_transient($key))) {
+                    $posts = $this->_get_posts($post_type);
+                    $pagenate_urls = self::get_paginates($post_type_archive_link, count($posts));
+                    $this->_set_transient($key, $pagenate_urls);
+                    unset($posts);
+                }
+                $added = $this->_add_urls(
+                    $urls,
+                    (array)$pagenate_urls,
+                    'post_type_archive_link',
+                    $post_type
+                );
+                if (self::FINAL === $added) {
+                    break;
+                }
+                unset($pagenate_urls);
             }
-            $added = $this->_add_urls(
-                $urls,
-                (array)$post_type_archive_link,
-                'post_type_archive_link',
-                $post_type
-            );
-            if (self::FINAL === $added) {
-                break;
-            }
-
-            // pagenate links
-            $key = __METHOD__."-{$post_type}-pagenate";
-            if (false === ($pagenate_urls = $this->_get_transient($key))) {
-                $posts = $this->_get_posts($post_type);
-                $pagenate_urls = self::get_paginates($post_type_archive_link, count($posts));
-                $this->_set_transient($key, $pagenate_urls);
-                unset($posts);
-            }
-            $added = $this->_add_urls(
-                $urls,
-                (array)$pagenate_urls,
-                'post_type_archive_link',
-                $post_type
-            );
-            if (self::FINAL === $added) {
-                break;
-            }
-            unset($pagenate_urls);
         }
 
         $this->set('urls', $urls);
