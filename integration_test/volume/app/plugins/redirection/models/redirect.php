@@ -1,8 +1,8 @@
 <?php
 
-include_once dirname( __FILE__ ) . '/url.php';
-include_once dirname( __FILE__ ) . '/regex.php';
-include_once dirname( __FILE__ ) . '/redirect-sanitizer.php';
+require_once dirname( __FILE__ ) . '/url.php';
+require_once dirname( __FILE__ ) . '/regex.php';
+require_once dirname( __FILE__ ) . '/redirect-sanitizer.php';
 
 class Red_Item {
 	private $id  = null;
@@ -23,7 +23,7 @@ class Red_Item {
 
 	public $source_flags = false;
 
-	function __construct( $values = null ) {
+	public function __construct( $values = null ) {
 		if ( is_object( $values ) ) {
 			$this->load_from_data( $values );
 		}
@@ -79,7 +79,7 @@ class Red_Item {
 		}
 	}
 
-	static function get_all_for_module( $module ) {
+	public static function get_all_for_module( $module ) {
 		global $wpdb;
 
 		$rows = $wpdb->get_results(
@@ -101,7 +101,7 @@ class Red_Item {
 		return $items;
 	}
 
-	static function get_for_url( $url ) {
+	public static function get_for_url( $url ) {
 		$status = new Red_Database_Status();
 
 		// deprecate
@@ -112,7 +112,7 @@ class Red_Item {
 		return self::get_old_url( $url );
 	}
 
-	static function get_for_matched_url( $url ) {
+	public static function get_for_matched_url( $url ) {
 		global $wpdb;
 
 		$url = new Red_Url_Match( $url );
@@ -165,11 +165,11 @@ class Red_Item {
 		return $items;
 	}
 
-	static public function reduce_sorted_items( $item ) {
+	public static function reduce_sorted_items( $item ) {
 		return $item['item'];
 	}
 
-	static public function get_all() {
+	public static function get_all() {
 		global $wpdb;
 
 		$rows = $wpdb->get_results( "SELECT * FROM {$wpdb->prefix}redirection_items" );
@@ -198,7 +198,7 @@ class Red_Item {
 		return ( $first['position'] < $second['position'] ) ? -1 : 1;
 	}
 
-	static function get_by_id( $id ) {
+	public static function get_by_id( $id ) {
 		global $wpdb;
 
 		$row = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$wpdb->prefix}redirection_items WHERE id=%d", $id ) );
@@ -224,7 +224,7 @@ class Red_Item {
 		Red_Module::flush( $this->group_id );
 	}
 
-	static function create( array $details ) {
+	public static function create( array $details ) {
 		global $wpdb;
 
 		$sanitizer = new Red_Item_Sanitize();
@@ -261,10 +261,10 @@ class Red_Item {
 				return $redirect;
 			}
 
-			return new WP_Error( 'redirect', 'Unable to get newly added redirect' );
+			return new WP_Error( 'redirect_create_failed', 'Unable to get newly added redirect' );
 		}
 
-		return new WP_Error( 'redirect', __( 'Unable to add new redirect' ) );
+		return new WP_Error( 'redirect_create_failed', 'Unable to add new redirect' );
 	}
 
 	public function update( $details ) {
@@ -302,18 +302,22 @@ class Red_Item {
 			return true;
 		}
 
-		return new WP_Error( 'redirect', __( 'Unable to update redirect' ) );
+		return new WP_Error( 'redirect_create_failed', 'Unable to update redirect' );
 	}
 
 	/**
 	 * Determine if a requested URL matches this URL
 	 *
-	 * @param string $requested_url
+	 * @param string $requested_url The URL being requested.
 	 * @return bool true if matched, false otherwise
 	 */
-	public function is_match( $requested_url ) {
+	public function is_match( $requested_url, $original_url = false ) {
 		if ( ! $this->is_enabled() ) {
 			return false;
+		}
+
+		if ( $original_url === false ) {
+			$original_url = $requested_url;
 		}
 
 		$url = new Red_Url( $this->url );
@@ -324,8 +328,8 @@ class Red_Item {
 			// Check if our action wants a URL
 			if ( $this->action->needs_target() ) {
 				// Our action requires a target URL - get this, using our type match result
-				$target = $this->match->get_target_url( $requested_url, $url->get_url(), $this->source_flags, $target );
-				$target = Red_Url_Query::add_to_target( $target, $requested_url, $this->source_flags );
+				$target = $this->match->get_target_url( $original_url, $url->get_url(), $this->source_flags, $target );
+				$target = Red_Url_Query::add_to_target( $target, $original_url, $this->source_flags );
 				$target = apply_filters( 'redirection_url_target', $target, $this->url );
 			}
 
@@ -351,7 +355,10 @@ class Red_Item {
 
 		// Update the counters
 		$this->last_count++;
-		$wpdb->query( $wpdb->prepare( "UPDATE {$wpdb->prefix}redirection_items SET last_count=last_count+1, last_access=NOW() WHERE id=%d", $this->id ) );
+
+		if ( apply_filters( 'redirection_redirect_counter', true ) ) {
+			$wpdb->query( $wpdb->prepare( "UPDATE {$wpdb->prefix}redirection_items SET last_count=last_count+1, last_access=NOW() WHERE id=%d", $this->id ) );
+		}
 
 		if ( isset( $options['expire_redirect'] ) && $options['expire_redirect'] !== -1 && $target ) {
 			$details = array(
