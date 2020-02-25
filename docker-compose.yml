@@ -11,6 +11,7 @@ services:
     volumes:
       - "./integration_test/volume/app:/var/www/html/web/wp/wp-content"
       - "./integration_test/volume/shifter-artifact-helper:/var/www/html/web/wp/mu-plugins/shifter-artifact-helper"
+      # - ".:/var/www/html/web/wp/mu-plugins/shifter-artifact-helper" # develop
       - "./integration_test/volume/dump:/mnt/dump"
     environment:
       - SERVICE_PORT=8443
