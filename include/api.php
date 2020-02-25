@@ -13,9 +13,15 @@ function shifter_get_urls($request_path=null, $rest_request=false)
         $request_path = trailingslashit($request_path);
     }
 
-    if (defined('POLYLANG_BASENAME') || is_plugin_active('polylang/polylang.php')) {
-        require_once __DIR__.'/class-shifter-urls-polylang.php';
-        $shifter_urls = ShifterUrlsPolylang::get_instance();
+    if ((defined('POLYLANG_BASENAME') || (is_plugin_active('polylang/polylang.php'))) &&  function_exists('pll_default_language')) {
+        // function_exists('pll_default_language')) returns true via rest-api
+        // pll_default_language() returns false without any settings
+        if (pll_default_language()) {
+            require_once __DIR__.'/class-shifter-urls-polylang.php';
+            $shifter_urls = ShifterUrlsPolylang::get_instance();
+        } else {
+            $shifter_urls = ShifterUrlsBase::get_instance();
+        }
     } else {
         $shifter_urls = ShifterUrlsBase::get_instance();
     }

@@ -317,22 +317,22 @@ class TestPostHasNextPage < Test::Unit::TestCase
   end
 end
 
-class TestUrlsWithBogo < Test::Unit::TestCase
-  description 'Paginate page only return paginate url.'
-  root_url = get_urls(path: '/', urls: 0)
-  en_url = get_urls(path: '/en/', urls: 0)
+# class TestUrlsWithBogo < Test::Unit::TestCase
+#   description 'Paginate page only return paginate url.'
+#   root_url = get_urls(path: '/', urls: 0)
+#   en_url = get_urls(path: '/en/', urls: 0)
 
-  data(
-    'url_home': [count_by(root_url, 'link_type', 'home'), 1],
-    'url_en_home': [count_by(en_url, 'link_type', 'home'), 0],
-    'root_url' => [root_url['count'], 100],
-    'en_url' => [en_url['count'], 19],
-  )
-  def test_urls_count(data)
-    expected, actual = data
-    assert_equal(expected, actual)
-  end
-end
+#   data(
+#     'url_home': [count_by(root_url, 'link_type', 'home'), 1],
+#     'url_en_home': [count_by(en_url, 'link_type', 'home'), 0],
+#     'root_url' => [root_url['count'], 100],
+#     'en_url' => [en_url['count'], 19],
+#   )
+#   def test_urls_count(data)
+#     expected, actual = data
+#     assert_equal(expected, actual)
+#   end
+# end
 
 class TestQueryPattern < Test::Unit::TestCase
   description 'Testing various patterns of querystring'
@@ -342,20 +342,20 @@ class TestQueryPattern < Test::Unit::TestCase
   urls_and_max25 = get_urls(path: '/', urls: 0, max: 25)
   urls_and_max100 = get_urls(path: '/', urls: 0, max: 100)
 
-  paginate_only_urls = get_urls(path: '/en/', urls: 0, max: nil)
-  paginate_urls_and_max1 = get_urls(path: '/en/', urls: 0, max: 1)
-  paginate_urls_and_max25 = get_urls(path: '/en/', urls: 0, max: 25)
-  paginate_urls_and_max100 = get_urls(path: '/en/', urls: 0, max: 100)
+  # paginate_only_urls = get_urls(path: '/en/', urls: 0, max: nil)
+  # paginate_urls_and_max1 = get_urls(path: '/en/', urls: 0, max: 1)
+  # paginate_urls_and_max25 = get_urls(path: '/en/', urls: 0, max: 25)
+  # paginate_urls_and_max100 = get_urls(path: '/en/', urls: 0, max: 100)
 
   data(
     'only_urls' => [only_urls['count'], 100],
     'urls_and_max1' => [urls_and_max1['count'], 1],
     'urls_and_max25' => [urls_and_max25['count'], 25],
     'urls_and_max100' => [urls_and_max100['count'], 100],
-    'paginate_only_urls' => [paginate_only_urls['count'], 19],
-    'paginate_urls_and_max1' => [paginate_urls_and_max1['count'], 1],
-    'paginate_urls_and_max25' => [paginate_urls_and_max25['count'], 19],
-    'paginate_urls_and_max100' => [paginate_urls_and_max100['count'], 19],
+    # 'paginate_only_urls' => [paginate_only_urls['count'], 19],
+    # 'paginate_urls_and_max1' => [paginate_urls_and_max1['count'], 1],
+    # 'paginate_urls_and_max25' => [paginate_urls_and_max25['count'], 19],
+    # 'paginate_urls_and_max100' => [paginate_urls_and_max100['count'], 19],
   )
   def test_query_patterns(data)
     expected, actual = data

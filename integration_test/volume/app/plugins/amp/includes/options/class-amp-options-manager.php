@@ -66,10 +66,15 @@ class AMP_Options_Manager {
 
 		add_action( 'update_option_' . self::OPTION_NAME, [ __CLASS__, 'maybe_flush_rewrite_rules' ], 10, 2 );
 		add_action( 'admin_notices', [ __CLASS__, 'render_welcome_notice' ] );
+		add_action( 'admin_notices', [ __CLASS__, 'render_stories_deprecation_notice' ] );
 		add_action( 'admin_notices', [ __CLASS__, 'persistent_object_caching_notice' ] );
 		add_action( 'admin_notices', [ __CLASS__, 'render_cache_miss_notice' ] );
 		add_action( 'admin_notices', [ __CLASS__, 'render_php_css_parser_conflict_notice' ] );
 		add_action( 'admin_notices', [ __CLASS__, 'insecure_connection_notice' ] );
+
+		if ( self::is_stories_experience_enabled() ) {
+			add_action( 'enqueue_block_editor_assets', [ __CLASS__, 'render_stories_deprecation_editor_notice' ] );
+		}
 	}
 
 	/**
@@ -202,11 +207,16 @@ class AMP_Options_Manager {
 	 * @return bool Enabled.
 	 */
 	public static function is_stories_experience_enabled() {
-		return (
-			AMP_Story_Post_Type::has_required_block_capabilities()
-			&&
-			in_array( self::STORIES_EXPERIENCE, self::get_option( 'experiences' ), true )
-		);
+		$stories_enabled = in_array( self::STORIES_EXPERIENCE, self::get_option( 'experiences' ), true );
+
+		if ( $stories_enabled && ! AMP_Story_Post_Type::has_posts() ) {
+			if ( post_type_exists( AMP_Story_Post_Type::POST_TYPE_SLUG ) ) {
+				unregister_post_type( AMP_Story_Post_Type::POST_TYPE_SLUG );
+			}
+			return false;
+		}
+
+		return AMP_Story_Post_Type::has_required_block_capabilities() && $stories_enabled;
 	}
 
 	/**
@@ -223,8 +233,10 @@ class AMP_Options_Manager {
 		}
 
 		// Experiences.
-		if ( isset( $new_options['experiences'] ) && is_array( $new_options['experiences'] ) ) {
-
+		if ( ! isset( $new_options['experiences'][ self::STORIES_EXPERIENCE ] ) && ! AMP_Story_Post_Type::has_posts() ) {
+			// If there are no Story posts and the Story experience is disabled, only the Website experience is considered enabled.
+			$options['experiences'] = [ self::WEBSITE_EXPERIENCE ];
+		} elseif ( isset( $new_options['experiences'] ) && is_array( $new_options['experiences'] ) ) {
 			// Validate the selected experiences.
 			$options['experiences'] = array_intersect(
 				$new_options['experiences'],
@@ -343,16 +355,18 @@ class AMP_Options_Manager {
 			AMP_Theme_Support::reset_cache_miss_url_option();
 		}
 
-		// Handle the base URL for exported stories.
-		$options['story_export_base_url'] = isset( $new_options['story_export_base_url'] ) ? esc_url_raw( $new_options['story_export_base_url'], [ 'https' ] ) : '';
+		if ( isset( $new_options['experiences'] ) && in_array( self::STORIES_EXPERIENCE, $new_options['experiences'], true ) ) {
+			// Handle the base URL for exported stories.
+			$options['story_export_base_url'] = isset( $new_options['story_export_base_url'] ) ? esc_url_raw( $new_options['story_export_base_url'], [ 'https' ] ) : '';
 
-		// AMP stories settings definitions.
-		$definitions = AMP_Story_Post_Type::get_stories_settings_definitions();
+			// AMP stories settings definitions.
+			$definitions = AMP_Story_Post_Type::get_stories_settings_definitions();
 
-		// Handle the AMP stories settings sanitization.
-		foreach ( $definitions as $option_name => $definition ) {
-			$value = $new_options[ AMP_Story_Post_Type::STORY_SETTINGS_OPTION ][ $option_name ];
-			$options[ AMP_Story_Post_Type::STORY_SETTINGS_OPTION ][ $option_name ] = call_user_func( $definition['meta_args']['sanitize_callback'], $value );
+			// Handle the AMP stories settings sanitization.
+			foreach ( $definitions as $option_name => $definition ) {
+				$value = $new_options[ AMP_Story_Post_Type::STORY_SETTINGS_OPTION ][ $option_name ];
+				$options[ AMP_Story_Post_Type::STORY_SETTINGS_OPTION ][ $option_name ] = call_user_func( $definition['meta_args']['sanitize_callback'], $value );
+			}
 		}
 
 		return $options;
@@ -420,6 +434,10 @@ class AMP_Options_Manager {
 	 * @return bool Whether update succeeded.
 	 */
 	public static function update_option( $option, $value ) {
+		if ( 'experiences' === $option && in_array( self::STORIES_EXPERIENCE, $value, true ) ) {
+			wp_cache_delete( 'count-' . AMP_Story_Post_Type::POST_TYPE_SLUG );
+		}
+
 		$amp_options = self::get_options();
 
 		$amp_options[ $option ] = $value;
@@ -562,6 +580,61 @@ class AMP_Options_Manager {
 				)
 			);
 		}
+	}
+
+	/**
+	 * Render the Stories deprecation admin notice.
+	 */
+	public static function render_stories_deprecation_notice() {
+		if (
+			AMP_Story_Post_Type::has_posts() &&
+			(
+				'edit-amp_story' === get_current_screen()->id ||
+				'toplevel_page_' . self::OPTION_NAME === get_current_screen()->id
+			)
+		) {
+			printf(
+				'<div class="notice notice-warning"><p>%s %s</p></div>',
+				esc_html__( 'The Stories experience is being extracted into a standalone plugin which will be available soon. Please back up or export your existing Stories as they will not be available in the next version of the AMP plugin.', 'amp' ),
+				sprintf(
+					'<a href="%s" target="_blank">%s</a>',
+					esc_url( 'https://amp-wp.org/documentation/amp-stories/exporting-stories/' ),
+					esc_html__( 'View how to export your Stories', 'amp' )
+				)
+			);
+		} elseif ( ! self::is_stories_experience_enabled() && 'toplevel_page_' . self::OPTION_NAME === get_current_screen()->id ) {
+			printf(
+				'<div class="notice notice-info"><p>%s</p></div>',
+				esc_html__( 'The Stories experience is being extracted into a standalone plugin which will be available soon.', 'amp' )
+			);
+		}
+	}
+
+	/**
+	 * Render the Stories deprecation notice in the Story editor.
+	 */
+	public static function render_stories_deprecation_editor_notice() {
+		$script = sprintf(
+			"( function( wp ) {
+						wp.data.dispatch( 'core/notices' ).createNotice(
+							'warning',
+							%s,
+							{
+								isDismissible: false,
+								actions: [
+									{
+										url: 'https://amp-wp.org/documentation/amp-stories/exporting-stories/',
+										label: %s,
+									},
+								],
+						    }
+						);
+					} )( window.wp );",
+			wp_json_encode( __( 'The Stories experience is being extracted into a standalone plugin which will be available soon. Please back up or export your existing Stories as they will not be available in the next version of the AMP plugin.', 'amp' ) ),
+			wp_json_encode( __( 'View how to export your Stories', 'amp' ) )
+		);
+
+		wp_add_inline_script( AMP_Story_Post_Type::AMP_STORIES_SCRIPT_HANDLE, $script );
 	}
 
 	/**
@@ -718,23 +791,9 @@ class AMP_Options_Manager {
 			$validation = AMP_Validation_Manager::validate_url( $url );
 
 			if ( is_wp_error( $validation ) ) {
-				$review_messages[] = esc_html(
-					sprintf(
-						/* translators: 1: error message. 2: error code. */
-						__( 'However, there was an error when checking the AMP validity for your site.', 'amp' ),
-						$validation->get_error_message(),
-						$validation->get_error_code()
-					)
-				);
-
-				$error_message = $validation->get_error_message();
-				if ( $error_message ) {
-					$review_messages[] = $error_message;
-				} else {
-					/* translators: %s is the error code */
-					$review_messages[] = esc_html( sprintf( __( 'Error code: %s.', 'amp' ), $validation->get_error_code() ) );
-				}
-				$notice_type = 'error';
+				$review_messages[] = esc_html__( 'However, there was an error when checking the AMP validity for your site.', 'amp' );
+				$review_messages[] = AMP_Validation_Manager::get_validate_url_error_message( $validation->get_error_code(), $validation->get_error_message() );
+				$notice_type       = 'error';
 			} elseif ( is_array( $validation ) ) {
 				$new_errors      = 0;
 				$rejected_errors = 0;
@@ -757,7 +816,7 @@ class AMP_Options_Manager {
 				if ( $rejected_errors > 0 ) {
 					$notice_type = 'error';
 
-					$message = wp_kses_post(
+					$message = esc_html(
 						sprintf(
 							/* translators: %s is count of rejected errors */
 							_n(
@@ -772,43 +831,37 @@ class AMP_Options_Manager {
 					);
 
 					if ( $invalid_url_screen_url ) {
-						$message .= ' ' . wp_kses_post(
-							sprintf(
-								/* translators: %s is URL to review issues */
-								_n(
-									'<a href="%s">Review Issue</a>.',
-									'<a href="%s">Review Issues</a>.',
-									$rejected_errors,
-									'amp'
-								),
-								esc_url( $invalid_url_screen_url )
-							)
+						$message .= ' ' . sprintf(
+							/* translators: %s is URL to review issues */
+							_n(
+								'<a href="%s">Review Issue</a>.',
+								'<a href="%s">Review Issues</a>.',
+								$rejected_errors,
+								'amp'
+							),
+							esc_url( $invalid_url_screen_url )
 						);
 					}
 
 					$review_messages[] = $message;
 				} else {
-					$message = wp_kses_post(
-						sprintf(
-							/* translators: %s is an AMP URL */
-							__( 'View an <a href="%s">AMP version of your site</a>.', 'amp' ),
-							esc_url( $url )
-						)
+					$message = sprintf(
+						/* translators: %s is an AMP URL */
+						__( 'View an <a href="%s">AMP version of your site</a>.', 'amp' ),
+						esc_url( $url )
 					);
 
 					if ( $new_errors > 0 && $invalid_url_screen_url ) {
-						$message .= ' ' . wp_kses_post(
-							sprintf(
-								/* translators: 1: URL to review issues. 2: count of new errors. */
-								_n(
-									'Please also <a href="%1$s">review %2$s issue</a> which may need to be fixed (for one URL at least).',
-									'Please also <a href="%1$s">review %2$s issues</a> which may need to be fixed (for one URL at least).',
-									$new_errors,
-									'amp'
-								),
-								esc_url( $invalid_url_screen_url ),
-								number_format_i18n( $new_errors )
-							)
+						$message .= ' ' . sprintf(
+							/* translators: 1: URL to review issues. 2: count of new errors. */
+							_n(
+								'Please also <a href="%1$s">review %2$s issue</a> which may need to be fixed (for one URL at least).',
+								'Please also <a href="%1$s">review %2$s issues</a> which may need to be fixed (for one URL at least).',
+								$new_errors,
+								'amp'
+							),
+							esc_url( $invalid_url_screen_url ),
+							number_format_i18n( $new_errors )
 						);
 					}
 
@@ -831,18 +884,16 @@ class AMP_Options_Manager {
 				}
 				break;
 			case AMP_Theme_Support::READER_MODE_SLUG:
-				$message = wp_kses_post(
-					sprintf(
-						/* translators: %s is an AMP URL */
-						__( 'Reader mode activated! View the <a href="%s">AMP version of a recent post</a>. It is recommended that you upgrade to Standard or Transitional mode.', 'amp' ),
-						esc_url( $url )
-					)
+				$message = sprintf(
+					/* translators: %s is an AMP URL */
+					__( 'Reader mode activated! View the <a href="%s">AMP version of a recent post</a>. It is recommended that you upgrade to Standard or Transitional mode.', 'amp' ),
+					esc_url( $url )
 				);
 				break;
 		}
 
 		if ( isset( $message ) ) {
-			add_settings_error( self::OPTION_NAME, 'template_mode_updated', $message, $notice_type );
+			add_settings_error( self::OPTION_NAME, 'template_mode_updated', wp_kses_post( $message ), $notice_type );
 		}
 	}
 }
