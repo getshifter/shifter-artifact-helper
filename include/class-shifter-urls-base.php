@@ -852,7 +852,7 @@ class ShifterUrlsBase
     }
 
     /**
-     * Get post parmalink URLs
+     * Get post permalink URLs
      *
      * @param array   $urls
      *
