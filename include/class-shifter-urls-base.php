@@ -27,6 +27,9 @@ class ShifterUrlsBase
     const URL_ARCHIVE = 'ARCHIVE';
     const URL_SINGULAR = 'SINGULAR';
 
+    const FILTER_ADD_URL_NAME = 'ShifterURLS::AppendURLtoAll';
+    const FILTER_ADD_SINGLEPAGE_URL_NAME = 'ShifterURLS::AppendURLtoSinglePage';
+
     /**
      * Constructor
      */
@@ -346,6 +349,12 @@ class ShifterUrlsBase
             $this->_redirection_urls($urls);
         }
 
+        // Hook to append urls provides by 3rd parties
+        $append_urls = (array)apply_filters(self::FILTER_ADD_URL_NAME, []);
+        if (count($append_urls) > 0) {
+            $this->_append_urls($urls, $append_urls);
+        }
+
         $urls['request_type'] = self::URL_TOP;
         $urls['request_path'] = $this->get_request_path();
         $urls['count'] = count($urls['items']);
@@ -382,6 +391,13 @@ class ShifterUrlsBase
         $request_uri  = $this->get_request_uri();
         $urls = $this->_default_urls_array();
         $this->_pagenate_urls($urls, $request_uri);  // pagenate links
+
+        // Hook to append urls provides by 3rd parties
+        $append_urls = (array)apply_filters(self::FILTER_ADD_SINGLEPAGE_URL_NAME, [], $request_uri);
+        if (count($append_urls) > 0) {
+            $this->_append_urls($urls, $append_urls);
+        }
+
         $urls['request_type'] = self::URL_ARCHIVE;
         $urls['request_path'] = $this->get_request_path();
         $urls['count'] = count($urls['items']);
@@ -1772,6 +1788,44 @@ class ShifterUrlsBase
             }
         }
         unset($matches);
+
+        $this->set('urls', $urls);
+        return $this->_check_final() ? self::FINAL : self::NOT_FINAL;
+    }
+
+    /**
+     * Get URLs from action hook
+     *
+     * @param array $urls
+     *
+     * @return integer
+     */
+    protected function _append_urls(&$urls = array(), $append_urls = array())
+    {
+        if (self::FINAL === $this->_urls_init($urls)) {
+            return self::FINAL;
+        }
+
+        $custom_urls = [];
+        foreach ((array)$append_urls as $custom_url) {
+            $custom_url = trailingslashit(
+                self::link_normalize($custom_url, true)
+            );
+            if ($custom_url === $this->get('home_url')) {
+                continue;
+            }
+            if (!$this->_check_link_format($custom_url)) {
+                continue;
+            }
+            $custom_urls[] = $custom_url;
+        }
+
+        $added = $this->_add_urls(
+            $urls,
+            (array)$custom_urls,
+            'from_filter_hook',
+            ''
+        );
 
         $this->set('urls', $urls);
         return $this->_check_final() ? self::FINAL : self::NOT_FINAL;
