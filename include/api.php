@@ -30,6 +30,9 @@ function shifter_get_urls($request_path = null, $rest_request = false)
             if (is_plugin_active('polylang/polylang.php') && function_exists('pll_default_language')) {
                 return true;
             }
+            if (is_plugin_active('polylang-pro/polylang.php') && function_exists('pll_default_language')) {
+                return true;
+            }
         }
 
         return false;
