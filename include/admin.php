@@ -78,7 +78,7 @@ function shifter_settings_page()
 <h2>Generator Settings</h2>
 
 <form method="post" action="options.php">
-    <p>Skip content you may not need and speed up the generating process. Selecting these options will exlucde them from your static Artifact.</p>
+    <p>Skip content you may not need and speed up the generating process. Selecting these options will exclude them from your static Artifact.</p>
     <?php settings_fields('shifter-options'); ?>
     <?php do_settings_sections('shifter-options'); ?>
     <table class="form-table">
