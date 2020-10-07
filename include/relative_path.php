@@ -8,7 +8,7 @@ if (!defined('ABSPATH')) {
  */
 function shifter_convert_app_url($content) {
     return preg_replace(
-        '#(https://|//)[0-9a-z]{8}-[0-9a-z]{4}-[0-9a-z]{4}-[0-9a-z]{4}-[0-9a-z]{12}\.(app|appdev)\.getshifter\.io(:[0-9]{5})?/#',
+        '#(https://|//)[0-9a-z]{8}-[0-9a-z]{4}-[0-9a-z]{4}-[0-9a-z]{4}-[0-9a-z]{12}\.(app|appdev|static|staticdev)\.getshifter\.(io|net)(:[0-9]{5})?/#',
         '/',
         $content
     );
