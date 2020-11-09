@@ -27,6 +27,8 @@ class ShifterUrlsBase
     const URL_ARCHIVE = 'ARCHIVE';
     const URL_SINGULAR = 'SINGULAR';
 
+    const ALLOWED_EXT = ['html', 'htm', 'xml', 'rss', 'rdf', 'atom', 'css', 'js', 'json'];
+
     const FILTER_ADD_URL_NAME = 'ShifterURLS::AppendURLtoAll';
     const FILTER_ADD_SINGLEPAGE_URL_NAME = 'ShifterURLS::AppendURLtoSinglePage';
 
@@ -1807,15 +1809,16 @@ class ShifterUrlsBase
         }
 
         $custom_urls = [];
+        $allow_ext = self::ALLOWED_EXT;
         foreach ((array)$append_urls as $custom_url) {
-            $custom_url = trailingslashit(
-                self::link_normalize($custom_url, true)
-            );
+            $custom_url = self::link_normalize($custom_url, true);
             if ($custom_url === $this->get('home_url')) {
                 continue;
             }
             if (!$this->_check_link_format($custom_url)) {
-                continue;
+                if (!preg_match('#(/|\.('.implode('|',$allow_ext).'))$#',$custom_url)) {
+                    continue;
+                }
             }
             $custom_urls[] = $custom_url;
         }
