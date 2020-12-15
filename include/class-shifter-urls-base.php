@@ -706,7 +706,7 @@ class ShifterUrlsBase
                 $new_url = home_url($new_url);
             }
             $path = preg_replace('#^https?://[^/]+/#', '/', $new_url);
-            if ('home' === $link_type || '404' === $link_type || $this->_check_link_format($new_url)) {
+            if ('home' === $link_type || '404' === $link_type || 'from_filter_hook' === $link_type || $this->_check_link_format($new_url)) {
                 if ($this->_check_range()) {
                     $url_item = $this->_urls_item(
                         (string)$link_type,
@@ -1016,7 +1016,7 @@ class ShifterUrlsBase
                 if (self::FINAL === $added) {
                     break;
                 }
-    
+
                 // pagenate links
                 $key = __METHOD__."-{$post_type}-{$post_type_archive_link}";
                 if (false === ($pagenate_urls = $this->_get_transient($key))) {
