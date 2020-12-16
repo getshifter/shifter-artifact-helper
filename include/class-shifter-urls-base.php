@@ -639,12 +639,20 @@ class ShifterUrlsBase
      *
      * @return string
      */
-    static public function link_normalize($link, $remove_index_html = false)
+    static public function remove_query_arg($link)
     {
-        $link = remove_query_arg(
+        return remove_query_arg(
             ['urls','max','page','limit', 'disables'],
             str_replace('&#038;', '&', $link)
         );
+    }
+    static public function remove_index_html($link)
+    {
+        return preg_replace('#/index\.html?$#', '/', $link);
+    }
+    static public function link_normalize($link, $remove_index_html = false)
+    {
+        $link = self::remove_query_arg($link);
         if (defined('SHIFTER_REST_REQUEST') && SHIFTER_REST_REQUEST) {
             $link = str_replace(
                 trailingslashit('/wp-json/'.self::REST_ENDPOINT.self::REST_PATH),
@@ -653,7 +661,7 @@ class ShifterUrlsBase
             );
         }
         if ($remove_index_html && preg_match('#/index\.html?$#', $link)) {
-            $link = preg_replace('#/index\.html?$#', '/', $link);
+            $link = self::remove_index_html($link);
         }
         return $link;
     }
@@ -701,12 +709,18 @@ class ShifterUrlsBase
             return self::FINAL;
         }
 
+        // _check_link_format() をスキップしても良い link_type
+        $allow_types = implode('|',[
+            'home',
+            '404',
+            'from_filter_hook',
+        ]);
         foreach ((array)$new_urls as $new_url) {
             if (preg_match('#^/#', $new_url)) {
                 $new_url = home_url($new_url);
             }
             $path = preg_replace('#^https?://[^/]+/#', '/', $new_url);
-            if ('home' === $link_type || '404' === $link_type || 'from_filter_hook' === $link_type || $this->_check_link_format($new_url)) {
+            if (preg_match('/^('.$allow_types.')$/', $link_type) || $this->_check_link_format($new_url)) {
                 if ($this->_check_range()) {
                     $url_item = $this->_urls_item(
                         (string)$link_type,
@@ -1809,14 +1823,21 @@ class ShifterUrlsBase
         }
 
         $custom_urls = [];
-        $allow_ext = self::ALLOWED_EXT;
+        $allow_ext = implode('|',self::ALLOWED_EXT);
         foreach ((array)$append_urls as $custom_url) {
-            $custom_url = self::link_normalize($custom_url, true);
+            $custom_url = self::remove_query_arg($custom_url);
             if ($custom_url === $this->get('home_url')) {
                 continue;
             }
+
+            // home_url() で開始されないURL(外部URL)は拒否
+            if (!preg_match('#^'.preg_quote(home_url(), '/').'#', $custom_url)) {
+                continue;
+            }
+
             if (!$this->_check_link_format($custom_url)) {
-                if (!preg_match('#(/|\.('.implode('|',$allow_ext).'))$#',$custom_url)) {
+                // 許可された拡張子以外は拒否
+                if (!preg_match('#\.('.$allow_ext.')$#', $custom_url)) {
                     continue;
                 }
             }
