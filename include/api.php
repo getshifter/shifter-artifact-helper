@@ -23,7 +23,7 @@ function shifter_get_urls($request_path = null, $rest_request = false)
      * Check Polylang status
      * @return boolean
      */
-    function is_polylang_active()
+    function shifter_is_polylang_active()
     {
         if (defined('POLYLANG_BASENAME') || defined('POLYLANG_PRO')) {
             require_once ABSPATH . 'wp-admin/includes/plugin.php';
@@ -38,7 +38,7 @@ function shifter_get_urls($request_path = null, $rest_request = false)
         return false;
     }
 
-    if (is_polylang_active()) {
+    if (shifter_is_polylang_active()) {
         // function_exists('pll_default_language')) returns true via rest-api
         // pll_default_language() returns false without any settings
         if (pll_default_language()) {
