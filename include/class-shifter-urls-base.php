@@ -32,6 +32,8 @@ class ShifterUrlsBase
     const FILTER_ADD_URL_NAME = 'ShifterURLS::AppendURLtoAll';
     const FILTER_ADD_SINGLEPAGE_URL_NAME = 'ShifterURLS::AppendURLtoSinglePage';
 
+    const FILTER_CHECK_URL_NAME = 'ShifterURLS::CheckURL';
+
     /**
      * Constructor
      */
@@ -549,13 +551,14 @@ class ShifterUrlsBase
      */
     private function _check_link_format($link)
     {
+        $correct = true;
         if (!$link || trailingslashit($link) === trailingslashit($this->get('home_url'))) {
-            return false;
+            $correct = false;
         }
         if (!preg_match('#/$#', $link)) {
-            return false;
+            $correct = false;
         }
-        return true;
+        return apply_filters(self::FILTER_CHECK_URL_NAME, $correct, $link);
     }
 
     /**
