@@ -1469,9 +1469,9 @@ class ShifterUrlsBase
         }
 
         foreach ($this->get('front_page_posts') as $post) {
-            // if ( ! property_exists( $post, 'ID' ) || ! $post->ID ) {
-            //     continue;
-            // }
+            if ( ! property_exists( $post, 'ID' ) || ! $post->ID ) {
+                continue;
+            }
             $permalink = $this->_get_permalink($post->ID, $post->post_type);
             if (trailingslashit($permalink) !== trailingslashit($this->get('home_url'))) {
                 if (!$this->_check_link_format($permalink)) {
