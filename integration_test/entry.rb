@@ -15,7 +15,7 @@ def get_urls(path:, urls: 0, max: 100)
     url = "#{REMOTE_SERVER}#{path}?urls=#{urls}"
   end
   p url
-  res = open(
+  res = URI.open(
     url,
     :ssl_verify_mode => OpenSSL::SSL::VERIFY_NONE
   ).read
@@ -28,7 +28,7 @@ def get_urls(path:, urls: 0, max: 100)
 end
 
 def get_urls_wprest(path:, page: 1, limit: 100)
-  res = open(
+  res = URI.open(
     "#{REMOTE_SERVER}/wp-json/shifter/v1/urls/#{path}?page=#{page}&limit=#{limit}",
     :ssl_verify_mode => OpenSSL::SSL::VERIFY_NONE
   ).read
