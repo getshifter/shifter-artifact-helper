@@ -1469,7 +1469,7 @@ class ShifterUrlsBase
         }
 
         foreach ($this->get('front_page_posts') as $post) {
-            if ( ! property_exists( $post, 'ID' ) || ! $post->ID ) {
+            if ( ! is_object( $post ) || ! property_exists( $post, 'ID' ) || ! $post->ID ) {
                 continue;
             }
             $permalink = $this->_get_permalink($post->ID, $post->post_type);
