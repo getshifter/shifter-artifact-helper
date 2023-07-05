@@ -280,7 +280,7 @@ add_action(
                         wp_die( $overridden_theme->errors() );
                     }
                 }
-                wp_die();
+                die();
             } else {
                 return;
             }
