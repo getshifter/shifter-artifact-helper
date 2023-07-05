@@ -267,12 +267,20 @@ add_action(
             );
             if (preg_match('#^/'.preg_quote(ShifterUrlsBase::PATH_404_HTML).'/?$#i', $request_uri)) {
                 header("HTTP/1.1 404 Not Found");
-                $overridden_template = locate_template('404.php');
-                if (!file_exists($overridden_template)) {
-                    $overridden_template = locate_template('index.php');
+                $overridden_template = get_404_template();
+                if ( ! $overridden_template ) {
+                    $overridden_template = get_index_template();
                 }
-                load_template($overridden_template);
-                die();
+                $overridden_template = apply_filters( 'template_include', $overridden_template );
+                if ( $overridden_template ) {
+                    include $overridden_template;
+                } elseif ( current_user_can( 'switch_themes' ) ) {
+                    $overridden_theme = wp_get_theme();
+                    if ( $overridden_theme->errors() ) {
+                        wp_die( $overridden_theme->errors() );
+                    }
+                }
+                wp_die();
             } else {
                 return;
             }
