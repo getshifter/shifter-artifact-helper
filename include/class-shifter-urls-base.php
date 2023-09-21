@@ -1753,6 +1753,8 @@ class ShifterUrlsBase
      */
     protected function _singlepage_pagenate_urls(&$urls = array(), $request_path='/')
     {
+        global $post;
+
         if (self::FINAL === $this->_urls_init($urls)) {
             return self::FINAL;
         }
@@ -1762,12 +1764,17 @@ class ShifterUrlsBase
             return $this->_check_final() ? self::FINAL : self::NOT_FINAL;
         }
 
-        global $post;
         $post_id = $this->_get_postid_from_url($request_path);
-        $post = get_post($post_id);
+        $requested_post = get_post($post_id);
+        if ( is_wp_error($requested_post) ) {
+            return $this->_check_final() ? self::FINAL : self::NOT_FINAL;
+        }
+
+        $post = $requested_post;
+        $post_type = property_exists($post,'post_type') ? $post->post_type : '';
         setup_postdata($post);
 
-        $permalink = $this->_get_permalink($post_id, $post->post_type);
+        $permalink = $this->_get_permalink($post_id, $post_type);
         $permalink_path = preg_replace('#https?://[^/]+/#', '/', $permalink);
         $current_page = 1;
         if ($permalink_path !== $request_path) {
@@ -1802,7 +1809,7 @@ class ShifterUrlsBase
                     $urls,
                     (array)$paginate_link,
                     'paginate_link',
-                    $post->post_type ? $post->post_type : ''
+                    $post_type
                 );
                 if (self::FINAL === $added) {
                     break;
