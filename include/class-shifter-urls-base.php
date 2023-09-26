@@ -1766,7 +1766,7 @@ class ShifterUrlsBase
 
         $post_id = $this->_get_postid_from_url($request_path);
         $requested_post = get_post($post_id);
-        if ( is_wp_error($requested_post) || is_empty($requested_post) || !is_object($requested_post) ) {
+        if ( is_wp_error($requested_post) || empty($requested_post) || !is_object($requested_post) ) {
             return $this->_check_final() ? self::FINAL : self::NOT_FINAL;
         }
 
