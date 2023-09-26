@@ -1766,12 +1766,15 @@ class ShifterUrlsBase
 
         $post_id = $this->_get_postid_from_url($request_path);
         $requested_post = get_post($post_id);
-        if ( is_wp_error($requested_post) ) {
+        if ( is_wp_error($requested_post) || is_empty($requested_post) || !is_object($post) ) {
             return $this->_check_final() ? self::FINAL : self::NOT_FINAL;
         }
 
         $post = $requested_post;
-        $post_type = property_exists($post,'post_type') ? $post->post_type : '';
+        $post_type = '';
+        if ( property_exists($post,'post_type') && isset($post->post_type) ) {
+            $post_type = $post->post_type;
+        }
         setup_postdata($post);
 
         $permalink = $this->_get_permalink($post_id, $post_type);
