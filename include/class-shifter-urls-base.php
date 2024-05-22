@@ -1370,10 +1370,12 @@ class ShifterUrlsBase
                 );
             }
             $paginate_links = [];
-            foreach ((array)$matches as $match) {
-                $paginate_links[] = self::link_normalize($match[1]);
+            if (isset($matches)) {
+                foreach ((array)$matches as $match) {
+                    $paginate_links[] = self::link_normalize($match[1]);
+                }
+                unset($matches);
             }
-            unset($matches);
             $this->_set_transient($key, $paginate_links);
         }
         return $paginate_links;
