@@ -450,10 +450,12 @@ class ShifterUrlsBase
                 'show_all' => true,
             ]
         );
-        if (preg_match_all('/class=["\']page-numbers["\'][\s]+href=["\']([^"\']*)["\']/', $pagenate_links, $pg_matches, PREG_SET_ORDER)) {
-            foreach ( $pg_matches as $pg_match ) {
-                $urls[] = self::link_normalize($pg_match[1]);
-            }
+        if ($pagenate_links) {
+            if (preg_match_all('/class=["\']page-numbers["\'][\s]+href=["\']([^"\']*)["\']/', $pagenate_links, $pg_matches, PREG_SET_ORDER)) {
+                foreach ( $pg_matches as $pg_match ) {
+                    $urls[] = self::link_normalize($pg_match[1]);
+                }
+           }
         }
         unset($pg_matches);
         return $urls;
@@ -1359,17 +1361,21 @@ class ShifterUrlsBase
 
         $key = __METHOD__."-{$request_uri}";
         if (false === ($paginate_links = $this->_get_transient($key))) {
-            preg_match_all(
-                '/class=["\']page-numbers["\'][\s]+href=["\']([^"\']*)["\']/',
-                paginate_links(['show_all'=> true]),
-                $matches,
-                PREG_SET_ORDER
-            );
-            $paginate_links = [];
-            foreach ((array)$matches as $match) {
-                $paginate_links[] = self::link_normalize($match[1]);
+            if (paginate_links(['show_all'=> true])){
+                preg_match_all(
+                    '/class=["\']page-numbers["\'][\s]+href=["\']([^"\']*)["\']/',
+                    paginate_links(['show_all'=> true]),
+                    $matches,
+                    PREG_SET_ORDER
+                );
             }
-            unset($matches);
+            $paginate_links = [];
+            if (isset($matches)) {
+                foreach ((array)$matches as $match) {
+                    $paginate_links[] = self::link_normalize($match[1]);
+                }
+                unset($matches);
+            }
             $this->_set_transient($key, $paginate_links);
         }
         return $paginate_links;
@@ -1423,9 +1429,11 @@ class ShifterUrlsBase
                 ]
             );
             $pg_matches = [];
-            if (preg_match_all('/class=["\']page-numbers["\'][\s]+href=["\']([^"\']*)["\']/', $pagenate_links, $matches, PREG_SET_ORDER)) {
-                foreach ($matches as $match) {
-                    $pg_matches[] = self::link_normalize($match[1]);
+            if ($pagenate_links) {
+                if (preg_match_all('/class=["\']page-numbers["\'][\s]+href=["\']([^"\']*)["\']/', $pagenate_links, $matches, PREG_SET_ORDER)) {
+                    foreach ($matches as $match) {
+                        $pg_matches[] = self::link_normalize($match[1]);
+                    }
                 }
             }
             unset($matches);
