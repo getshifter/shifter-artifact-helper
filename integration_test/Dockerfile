@@ -1,4 +1,4 @@
-FROM getshifter/shifter_local:latest
+FROM getshifter/shifter_local:8.0
 
 ENV DOCKERIZE_VERSION v0.6.1
 RUN wget https://github.com/jwilder/dockerize/releases/download/$DOCKERIZE_VERSION/dockerize-linux-amd64-$DOCKERIZE_VERSION.tar.gz \
