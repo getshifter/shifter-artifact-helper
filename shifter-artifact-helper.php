@@ -3,7 +3,7 @@
 Plugin Name: Shifter – Artifact Helper
 Plugin URI: https://github.com/getshifter/shifter-artifact-helper
 Description: Helper tool for building Shifter Artifacts
-Version: 1.9.1
+Version: 1.9.2
 Author: Shifter Team
 Author URI: https://getshifter.io
 License: GPLv2 or later
@@ -64,7 +64,8 @@ add_action(
             ShifterUrlsBase::REST_PATH,
             [
                 'methods'  => WP_REST_Server::READABLE,
-                'callback' => 'shifter_urls_for_rest_api'
+                'callback' => 'shifter_urls_for_rest_api',
+                'permission_callback' => '__return_true',
             ]
         );
         register_rest_route(
@@ -72,7 +73,8 @@ add_action(
             ShifterUrlsBase::REST_PATH.'/(?P<path>.+)',
             [
                 'methods'  => WP_REST_Server::READABLE,
-                'callback' => 'shifter_urls_for_rest_api'
+                'callback' => 'shifter_urls_for_rest_api',
+                'permission_callback' => '__return_true',
             ]
         );
         register_rest_route(
@@ -80,7 +82,8 @@ add_action(
             ShifterOneLogin::REST_PATH,
             [
                 'methods'  => WP_REST_Server::READABLE,
-                'callback' => 'shifter_one_login'
+                'callback' => 'shifter_one_login',
+                'permission_callback' => '__return_true',
             ]
         );
         register_rest_route(
@@ -88,7 +91,8 @@ add_action(
             ShifterOneLogin::REST_PATH.'/(?P<username>.+)',
             [
                 'methods'  => WP_REST_Server::READABLE,
-                'callback' => 'shifter_one_login'
+                'callback' => 'shifter_one_login',
+                'permission_callback' => '__return_true',
             ]
         );
         register_rest_route(
@@ -96,7 +100,8 @@ add_action(
             ShifterOneLogin::REST_PATH.'/(?P<action>.+)/(?P<username>.+)',
             [
                 'methods'  => WP_REST_Server::CREATABLE,
-                'callback' => 'shifter_one_login'
+                'callback' => 'shifter_one_login',
+                'permission_callback' => '__return_true',
             ]
         );
     }
