@@ -85,12 +85,14 @@ function shifter_settings_page()
 <h1>Shifter</h1>
 
 <div class="card">
-<h2>Generator Settings</h2>
+<h2>Shifter Settings</h2>
 
 <form method="post" action="options.php">
-    <p>Skip content you may not need and speed up the generating process. Selecting these options will exclude them from your static Artifact.</p>
     <?php settings_fields('shifter-options'); ?>
     <?php do_settings_sections('shifter-options'); ?>
+    
+    <h3>Generator Settings</h3>
+    <p>Skip content you may not need and speed up the generating process. Selecting these options will exclude them from your static Artifact.</p>
     <table class="form-table">
 <?php foreach ($options as $key => $title) { ?>
 <?php
@@ -109,17 +111,8 @@ function shifter_settings_page()
 <?php } ?>
     </table>
 
-    <?php submit_button(); ?>
-
-</form>
-</div>
-
-<div class="card">
-<h2>Custom URLs</h2>
-<form method="post" action="options.php">
+    <h3>Custom URLs</h3>
     <p>Add custom URLs to include in static generation. Enter one URL per line.</p>
-    <?php settings_fields('shifter-options'); ?>
-    <?php do_settings_sections('shifter-options'); ?>
     <table class="form-table">
         <tr valign="top">
         <th scope="row">Additional URLs</th>
@@ -132,16 +125,9 @@ function shifter_settings_page()
         </td>
         </tr>
     </table>
-    <?php submit_button(); ?>
-</form>
-</div>
 
-<div class="card">
-<h2>Exclude URLs</h2>
-<form method="post" action="options.php">
+    <h3>Exclude URLs</h3>
     <p>Exclude URLs from static generation using prefixes or file extensions.</p>
-    <?php settings_fields('shifter-options'); ?>
-    <?php do_settings_sections('shifter-options'); ?>
     <table class="form-table">
         <tr valign="top">
         <th scope="row">URL Prefixes to Exclude</th>
@@ -156,7 +142,9 @@ function shifter_settings_page()
         </td>
         </tr>
     </table>
+
     <?php submit_button(); ?>
+
 </form>
 </div>
 </div>
