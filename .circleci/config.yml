@@ -33,11 +33,11 @@ jobs:
             bundle exec ruby ./entry.rb
   release:
     docker:
-      - image: circleci/golang:latest
+      - image: cimg/go:1.23
     working_directory: ~/shifter-artifact-helper
     steps:
       - checkout
-      - run: go get -u github.com/tcnksm/ghr
+      - run: go install github.com/tcnksm/ghr@latest
       - run:
           name: tag release
           command: |
@@ -67,7 +67,7 @@ workflows:
           requires:
             - build
           filters:
-          #   branches:
-          #     only: master
+            #   branches:
+            #     only: master
             tags:
               only: /.*/
