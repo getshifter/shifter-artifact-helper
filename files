@@ -1,9 +1,10 @@
-./include/class-shifter-urls-base.php
-./include/class-shifter-urls-polylang.php
-./include/remove_meta_tags.php
-./include/api.php
 ./include/admin.php
+./include/remove_meta_tags.php
 ./include/magic_login.php
+./include/url-filters.php
 ./include/class-shifter-onelogin.php
 ./include/relative_path.php
+./include/class-shifter-urls-base.php
+./include/class-shifter-urls-polylang.php
+./include/api.php
 ./shifter-artifact-helper.php

@@ -23,6 +23,7 @@ require_once __DIR__.'/include/admin.php';
 require_once __DIR__.'/include/api.php';
 require_once __DIR__.'/include/class-shifter-urls-base.php';
 require_once __DIR__.'/include/class-shifter-onelogin.php';
+require_once __DIR__.'/include/url-filters.php';
 require_once __DIR__.'/include/magic_login.php';
 require_once __DIR__.'/include/relative_path.php';
 require_once __DIR__.'/include/remove_meta_tags.php';
