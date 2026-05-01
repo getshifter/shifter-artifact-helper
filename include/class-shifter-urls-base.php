@@ -337,7 +337,7 @@ class ShifterUrlsBase
             if (!$this->_check_skip('post_archive')) {
                 $this->_post_type_archive_urls($urls);   // archive links
             }
-            if (!$this->_check_skip('term_archive')) {
+            if (!$this->_check_skip('terms')) {
                 $this->_post_type_term_urls($urls);      // term links
             }
             if (!$this->_check_skip('date_archive')) {
