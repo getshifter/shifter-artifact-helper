@@ -1102,6 +1102,18 @@ class ShifterUrlsBase
         return get_object_taxonomies($post_type);
     }
 
+    /**
+     * Resolve skip option key from taxonomy name.
+     *
+     * @param string $taxonomy_name
+     *
+     * @return string
+     */
+    protected function _get_skip_key_from_taxonomy($taxonomy_name)
+    {
+        return preg_replace('/^post_/', '', $taxonomy_name);
+    }
+
     protected function _get_terms($taxonomy_name, $arg='')
     {
         return get_terms($taxonomy_name, $arg);
@@ -1193,7 +1205,7 @@ class ShifterUrlsBase
                 $this->_set_transient($key, $taxonomy_names);
             }
             foreach ($taxonomy_names as $taxonomy_name) {
-                if ($this->_check_skip(str_replace($post_type.'_', '', $taxonomy_name))) {
+                if ($this->_check_skip($this->_get_skip_key_from_taxonomy($taxonomy_name))) {
                     continue;
                 }
                 $key = __METHOD__."-{$post_type}-{$taxonomy_name}";
