@@ -1,41 +1,41 @@
 <?php
 
+if (!defined('ABSPATH')) {
+    exit; // don't access directly
+};
+
+/**
+ * Check Polylang status
+ *
+ * @return boolean
+ */
+function shifter_is_polylang_active()
+{
+    if (defined('POLYLANG_BASENAME') || defined('POLYLANG_PRO')) {
+        require_once ABSPATH . 'wp-admin/includes/plugin.php';
+        if (is_plugin_active('polylang/polylang.php') && function_exists('pll_default_language')) {
+            return true;
+        }
+        if (is_plugin_active('polylang-pro/polylang.php') && function_exists('pll_default_language')) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
 /**
  * Get URLs
  *
  * @param string  $request_path
  * @param boolean $rest_request
- * 
+ *
  * @return array|string
  */
-
-if (!defined('ABSPATH')) {
-    exit; // don't access directly
-};
-
 function shifter_get_urls($request_path = null, $rest_request = false)
 {
     if ($rest_request && '/' . ShifterUrlsBase::PATH_404_HTML !== $request_path) {
         $request_path = trailingslashit($request_path);
-    }
-
-    /**
-     * Check Polylang status
-     * @return boolean
-     */
-    function shifter_is_polylang_active()
-    {
-        if (defined('POLYLANG_BASENAME') || defined('POLYLANG_PRO')) {
-            require_once ABSPATH . 'wp-admin/includes/plugin.php';
-            if (is_plugin_active('polylang/polylang.php') && function_exists('pll_default_language')) {
-                return true;
-            }
-            if (is_plugin_active('polylang-pro/polylang.php') && function_exists('pll_default_language')) {
-                return true;
-            }
-        }
-
-        return false;
     }
 
     if (shifter_is_polylang_active()) {
