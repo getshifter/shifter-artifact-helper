@@ -141,11 +141,16 @@ class ShifterUrlsBase
                 $value = esc_html(self::link_normalize($value));
                 break;
             case 'request_path':
+                // サイト絶対パス。JSONレスポンスにそのまま出力される値
                 $value = preg_replace(
                     '#^https?://[^/]+/#',
                     '/',
                     $this->get('request_uri')
                 );
+                break;
+            case 'relative_request_path':
+                // home_url() のパスを基準にした相対パス。内部判定用
+                $value = self::relative_path($this->get('request_uri'));
                 break;
             case 'home_url':
                 $value = trailingslashit(home_url('/'));
@@ -162,7 +167,8 @@ class ShifterUrlsBase
                 $value = $this->_get_front_page_posts();
                 break;
             case 'current_url':
-                $value = home_url($this->get('request_path'));
+                // home_url() で復元するので home 相対パスを渡す
+                $value = home_url($this->get('relative_request_path'));
                 break;
             case 'urls':
                 $value = $this->_default_urls_array();
@@ -251,7 +257,7 @@ class ShifterUrlsBase
     /**
      * Get post ID from URL
      *
-     * @param string $request_path
+     * @param string $request_path home 相対パス (home_url() に渡せる形)
      *
      * @return integer post id
      */
@@ -273,7 +279,8 @@ class ShifterUrlsBase
     /**
      * Get current URL type
      *
-     * @param string  $request_path
+     * @param string  $request_path home 相対パス。REST API のルートパラメータは
+     *                              既に home 相対なので正規化せずそのまま渡す
      * @param boolean $rest_request
      *
      * @return string
@@ -281,7 +288,7 @@ class ShifterUrlsBase
     public function current_url_type($request_path=null, $rest_request=false)
     {
         if (!$request_path) {
-            $request_path  = $this->get_request_path();
+            $request_path  = $this->get_relative_request_path();
         }
         $current_url_type = self::URL_404;
         if (!$rest_request) {
@@ -655,6 +662,77 @@ class ShifterUrlsBase
     {
         return preg_replace('#/index\.html?$#', '/', $link);
     }
+
+    /**
+     * Get the path part of home_url() with a trailing slash
+     *
+     * サブディレクトリ公開では '/SUBDIR/'、ルート公開では '/' を返す。
+     *
+     * @return string
+     */
+    static public function home_path()
+    {
+        $path = parse_url(home_url('/'), PHP_URL_PATH);
+        if (!$path) {
+            return '/';
+        }
+        return trailingslashit('/'.ltrim($path, '/'));
+    }
+
+    /**
+     * Convert a full URL or a site absolute path into a home relative path
+     *
+     * 内部処理では home_url() に渡して復元できる「home 相対パス」を扱う。
+     * 剥がす基準を復元に使う home_url() と同一にすることで、
+     * サブディレクトリ公開でもパスとURLの変換が対称になる。
+     *
+     * REST API のルートパラメータのように既に home 相対な値へ適用してはならない。
+     * home_path と同名のパスセグメント(home_path が '/blog/' のときの '/blog/')を
+     * 誤って除去してしまう。
+     *
+     * @param string $path_or_url
+     *
+     * @return string
+     */
+    static public function relative_path($path_or_url)
+    {
+        $path = preg_replace('#^https?://[^/]+#', '', (string)$path_or_url);
+        if ('' === $path || '/' !== substr($path, 0, 1)) {
+            $path = '/'.$path;
+        }
+
+        $home_path = self::home_path();
+        if ('/' === $home_path) {
+            return $path;
+        }
+        if (0 === strcasecmp($path, untrailingslashit($home_path))) {
+            return '/';
+        }
+        if (0 === strncasecmp($path, $home_path, strlen($home_path))) {
+            $path = '/'.substr($path, strlen($home_path));
+        }
+        return $path;
+    }
+
+    /**
+     * Is the request for the 404 placeholder page?
+     *
+     * サブディレクトリ公開でも判定できるよう home 相対パスで比較する。
+     * 対象は home 直下の shifter_404.html のみ。
+     *
+     * @param string $request_uri
+     *
+     * @return boolean
+     */
+    static public function is_404_html_request($request_uri)
+    {
+        $path = self::relative_path(self::link_normalize($request_uri));
+        return 1 === preg_match(
+            '#^/'.preg_quote(self::PATH_404_HTML, '#').'/?$#i',
+            $path
+        );
+    }
+
     static public function link_normalize($link, $remove_index_html = false)
     {
         $link = self::remove_query_arg($link);
@@ -1362,7 +1440,7 @@ class ShifterUrlsBase
     {
         $paginate_links = [];
 
-        $request_uri = preg_replace('#https?://[^/]+/#', '/', $request_uri);
+        $request_uri = self::relative_path($request_uri);
         if (preg_match('#/page/[0-9]+/$#', $request_uri)) {
             return [];
         }
@@ -1399,7 +1477,7 @@ class ShifterUrlsBase
             return self::FINAL;
         }
 
-        $request_uri = preg_replace('#https?://[^/]+/#', '/', $request_uri);
+        $request_uri = self::relative_path($request_uri);
         if (preg_match('#/page/[0-9]+/$#', $request_uri)) {
             return $this->_check_final() ? self::FINAL : self::NOT_FINAL;
         }
@@ -1604,7 +1682,8 @@ class ShifterUrlsBase
         if (false === ($archives_lists = $this->_get_transient($key))) {
             $post = get_post($post_id);
             $permalink = $this->_get_permalink($post_id, $post->post_type);
-            $archive_base = preg_replace('#https?://[^/]+/#', '/', $permalink);
+            // _add_urls() が home_url() で完全URLに戻すため home 相対パスで渡す
+            $archive_base = self::relative_path($permalink);
 
             $archives_lists = [$archive_base];
             $posts_count = $this->_posts_count_from_post_type('post');
@@ -1779,7 +1858,7 @@ class ShifterUrlsBase
             return self::FINAL;
         }
 
-        $request_path = preg_replace('#https?://[^/]+/#', '/', $request_path);
+        $request_path = self::relative_path($request_path);
         if (preg_match('#/page/[0-9]+/$#', $request_path)) {
             return $this->_check_final() ? self::FINAL : self::NOT_FINAL;
         }
@@ -1798,7 +1877,8 @@ class ShifterUrlsBase
         setup_postdata($post);
 
         $permalink = $this->_get_permalink($post_id, $post_type);
-        $permalink_path = preg_replace('#https?://[^/]+/#', '/', $permalink);
+        // $request_path と比較するので同じ home 相対パスに揃える
+        $permalink_path = self::relative_path($permalink);
         $current_page = 1;
         if ($permalink_path !== $request_path) {
             $current_page = max(

@@ -268,10 +268,9 @@ add_action(
     'template_redirect',
     function () {
         if (!isset($_GET['urls'])) {
-            $request_uri  = ShifterUrlsBase::link_normalize(
+            if (ShifterUrlsBase::is_404_html_request(
                 isset($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : ''
-            );
-            if (preg_match('#^/'.preg_quote(ShifterUrlsBase::PATH_404_HTML).'/?$#i', $request_uri)) {
+            )) {
                 header("HTTP/1.1 404 Not Found");
                 $overridden_template = get_404_template();
                 if ( ! $overridden_template ) {

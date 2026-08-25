@@ -5,6 +5,17 @@
 Artifact helper tool for Shifter –  Serverless WordPress Hosting
 
 
+## Unit test
+
+Path handling (`ShifterUrlsBase::home_path()` / `relative_path()` / `current_url_type()`) is covered by
+PHP scripts that stub the WordPress functions they need. No WordPress or PHPUnit installation is required.
+
+```
+$ make test
+```
+
+These tests cover both root and subdirectory installs (`home_url()` with a path, e.g. `https://example.com/SUBDIR`).
+
 ## Integration test
 
 Sandbox
