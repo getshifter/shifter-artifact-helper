@@ -170,6 +170,9 @@ class ShifterUrlsBase
                 // home_url() で復元するので home 相対パスを渡す
                 $value = home_url($this->get('relative_request_path'));
                 break;
+            case 'service_worker_url':
+                $value = function_exists('wp_get_service_worker_url') ? wp_get_service_worker_url() : false;
+                break;
             case 'urls':
                 $value = $this->_default_urls_array();
                 $this->set_url_count(isset($value['items']) ? count($value['items']) : 0);
@@ -904,6 +907,17 @@ class ShifterUrlsBase
             (string)'404',
             ''
         );
+
+        // serviceworker
+        $home_urls['serviceworker'] = $this->get('service_worker_url');
+        if ( $home_urls['serviceworker'] !== false ) {
+            $added = $this->_add_urls(
+                $urls,
+                (array)$home_urls['serviceworker'],
+                (string)'serviceworker',
+                ''
+            );
+        }
 
         $this->set('urls', $urls);
         return $this->_check_final() ? self::FINAL : self::NOT_FINAL;
